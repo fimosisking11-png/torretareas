@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clan Vacacional - Tareas y Premios</title>
+    <title>Clan Vacacional - Cloud Realtime</title>
     <style>
         * {
             box-sizing: border-box;
@@ -28,10 +28,9 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding-bottom: 80px; /* Espacio para la barra inferior */
+            padding-bottom: 80px;
         }
 
-        /* Cabecera Fija */
         header {
             background-color: var(--card-bg);
             padding: 15px;
@@ -67,7 +66,6 @@
             outline: none;
         }
 
-        /* Contenedor Principal de Pantallas */
         .container {
             max-width: 500px;
             margin: 0 auto;
@@ -91,7 +89,6 @@
             gap: 8px;
         }
 
-        /* Estilos de Tarjetas / Filas */
         .card {
             background: var(--card-bg);
             border-radius: 14px;
@@ -138,7 +135,6 @@
             color: var(--accent);
         }
 
-        /* Botones */
         button {
             border: none;
             padding: 10px 16px;
@@ -153,17 +149,9 @@
             transform: scale(0.96);
         }
 
-        .btn-success {
-            background-color: var(--success);
-            color: white;
-        }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-accent { background-color: var(--accent); color: white; }
 
-        .btn-accent {
-            background-color: var(--accent);
-            color: white;
-        }
-
-        /* Tarjeta de Usuario del Ranking */
         .ranking-card {
             background: var(--card-bg);
             border-radius: 14px;
@@ -197,26 +185,11 @@
         .podium-2 { background-color: #f3f4f6; color: #4b5563; }
         .podium-3 { background-color: #ffedd5; color: #ea580c; }
 
-        .ranking-name {
-            font-weight: 600;
-        }
+        .ranking-name { font-weight: 600; }
+        .ranking-points { text-align: right; }
+        .total-pts { font-weight: 700; font-size: 15px; color: var(--primary); }
+        .current-pts { font-size: 12px; color: var(--text-muted); }
 
-        .ranking-points {
-            text-align: right;
-        }
-
-        .total-pts {
-            font-weight: 700;
-            font-size: 15px;
-            color: var(--primary);
-        }
-
-        .current-pts {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* Barra de Navegación Inferior */
         .nav-bar {
             position: fixed;
             bottom: 0;
@@ -245,7 +218,6 @@
             height: 100%;
             font-size: 12px;
             font-weight: 500;
-            transition: color 0.2s;
         }
 
         .nav-item.active {
@@ -253,30 +225,26 @@
             font-weight: 700;
         }
 
-        .nav-icon {
-            font-size: 20px;
-        }
+        .nav-icon { font-size: 20px; }
     </style>
 </head>
 <body>
 
-    <!-- CABECERA -->
     <header>
         <h1>🏡 Clan Vacacional</h1>
         <div class="user-selector-container">
             <label for="user-select"><small>Identidad:</small></label>
-            <select id="user-select" onchange="cambiarUsuario()">
-                <!-- JS autocompleta -->
+            <select id="user-select">
+                <!-- Se rellena dinámicamente -->
             </select>
         </div>
     </header>
 
     <div class="container">
-        
-        <!-- PANTALLA 1: RANKING (PRINCIPAL) -->
+        <!-- PANTALLA 1: RANKING -->
         <div id="screen-ranking" class="screen active">
             <h2>🏆 Clasificación en Tiempo Real</h2>
-            <div id="leaderboard-list"></div>
+            <div id="leaderboard-list">Cargando clasificación...</div>
         </div>
 
         <!-- PANTALLA 2: MISIONES -->
@@ -290,161 +258,215 @@
             <h2>🎁 Canjear Recompensas</h2>
             <div id="shop-list"></div>
         </div>
-
     </div>
 
-    <!-- NAVEGACIÓN INFERIOR (ESTILO APP MÓVIL) -->
     <nav class="nav-bar">
-        <div class="nav-item active" onclick="switchScreen('ranking', this)">
+        <div class="nav-item active" id="nav-ranking">
             <span class="nav-icon">🏆</span>
             <span>Ranking</span>
         </div>
-        <div class="nav-item" onclick="switchScreen('missions', this)">
+        <div class="nav-item" id="nav-missions">
             <span class="nav-icon">🧹</span>
             <span>Misiones</span>
         </div>
-        <div class="nav-item" onclick="switchScreen('shop', this)">
+        <div class="nav-item" id="nav-shop">
             <span class="nav-icon">🎁</span>
             <span>Tienda</span>
         </div>
     </nav>
 
-<script>
-    // 1. BASE DE DATOS LOCAL
-    let familia = JSON.parse(localStorage.getItem('clan_vacacional_data')) || [
-        { id: 0, nombre: "Papá", totales: 0, disponibles: 0 },
-        { id: 1, nombre: "Mamá", totales: 0, disponibles: 0 },
-        { id: 2, nombre: "Hijo 1", totales: 0, disponibles: 0 },
-        { id: 3, nombre: "Hijo 2", totales: 0, disponibles: 0 }
-    ];
+    <!-- INTEGRACIÓN MÓDULO FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const misiones = [
-        { nombre: "Lavar platos y cubiertos", puntos: 15, desc: "Cocina limpia tras comer" },
-        { nombre: "Bajar la basura al contenedor", puntos: 5, desc: "Orgánico y plástico" },
-        { nombre: "Hacer la compra del día", puntos: 30, desc: "Seguir la lista del frigo" },
-        { nombre: "Limpieza a fondo del baño", puntos: 50, desc: "Espejos, ducha e inodoro" },
-        { nombre: "Poner / Tender una lavadora", puntos: 20, desc: "Ropa limpia y bien estirada" }
-    ];
+        // Tus credenciales reales proporcionadas
+        const firebaseConfig = {
+            apiKey: "AIzaSyBq--uu5MuZYWdHy9n02Yb0YDmIyu78bbo",
+            authDomain: "torre-26e99.firebaseapp.com",
+            projectId: "torre-26e99",
+            storageBucket: "torre-26e99.firebasestorage.app",
+            messagingSenderId: "535955094081",
+            appId: "1:535955094081:web:ca85b74c6d685da8a664c0",
+            measurementId: "G-FHJEK2XZBV"
+        };
 
-    const recompensas = [
-        { nombre: "Elegir película de la noche", coste: 40, desc: "Decisión absoluta del catálogo" },
-        { nombre: "Exención de tareas mañana", coste: 100, desc: "Día libre de misiones domésticas" },
-        { nombre: "Elegir restaurante para cenar", coste: 150, desc: "Tú decides el destino gastronómico" },
-        { nombre: "Masaje de 15 minutos", coste: 80, desc: "Cortesía del miembro que elijas" }
-    ];
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-    let usuarioActivoId = parseInt(localStorage.getItem('clan_user_activo')) || 0;
+        // Estructura fija de la familia
+        const usuariosIniciales = [
+            { id: 0, nombre: "Papá" },
+            { id: 1, nombre: "Mamá" },
+            { id: 2, nombre: "Hijo 1" },
+            { id: 3, nombre: "Hijo 2" }
+        ];
 
-    // 2. CAMBIO DE PANTALLA (Tabs)
-    function switchScreen(screenId, element) {
-        // Desactivar todas las pantallas
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        // Activar seleccionada
-        document.getElementById(`screen-${screenId}`).classList.add('active');
-        
-        // Actualizar estados visuales de los botones de navegación
-        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-        element.classList.add('active');
+        const misiones = [
+            { nombre: "Lavar platos y cubiertos", puntos: 15, desc: "Cocina limpia tras comer" },
+            { nombre: "Bajar la basura al contenedor", puntos: 5, desc: "Orgánico y plástico" },
+            { nombre: "Hacer la compra del día", puntos: 30, desc: "Seguir la lista del frigo" },
+            { nombre: "Limpieza a fondo del baño", puntos: 50, desc: "Espejos, ducha e inodoro" },
+            { nombre: "Poner / Tender una lavadora", puntos: 20, desc: "Ropa limpia y bien estirada" }
+        ];
 
-        // Renderizar la información actualizada
-        renderizarTablas();
-    }
+        const recompensas = [
+            { nombre: "Elegir película de la noche", coste: 40, desc: "Decisión absoluta del catálogo" },
+            { nombre: "Exención de tareas mañana", coste: 100, desc: "Día libre de misiones domésticas" },
+            { nombre: "Elegir restaurante para cenar", coste: 150, desc: "Tú decides el destino gastronómico" }
+        ];
 
-    // 3. ACTUALIZACIÓN DEL ESTADO Y LOCALSTORAGE
-    function guardarCambios() {
-        localStorage.setItem('clan_vacacional_data', JSON.stringify(familia));
-        localStorage.setItem('clan_user_activo', usuarioActivoId);
-        renderizarTablas();
-    }
+        let familiaDatosGlobal = [];
+        let usuarioActivoId = parseInt(localStorage.getItem('clan_user_activo')) || 0;
 
-    function cambiarUsuario() {
-        usuarioActivoId = parseInt(document.getElementById('user-select').value);
-        guardarCambios();
-    }
+        // Inicializar documento en la nube si no existe
+        async function comprobarBaseDeDatos() {
+            const docRef = doc(db, "clan", "puntuaciones");
+            const docSnap = await getDoc(docRef);
 
-    // 4. GENERAR INTERFAZ DINÁMICAMENTE
-    function renderizarTablas() {
-        // Selector de identidad
-        const select = document.getElementById('user-select');
-        if (select.innerHTML === "") {
-            select.innerHTML = familia.map(u => `<option value="${u.id}" ${u.id === usuarioActivoId ? 'selected' : ''}>${u.nombre}</option>`).join('');
-        } else {
-            select.value = usuarioActivoId;
+            if (!docSnap.exists()) {
+                // Crear estructura inicial limpia
+                const estructuraInicial = {};
+                usuariosIniciales.forEach(u => {
+                    estructuraInicial[u.id] = { id: u.id, nombre: u.nombre, totales: 0, disponibles: 0 };
+                });
+                await setDoc(docRef, estructuraInicial);
+            }
         }
 
-        // --- RENDER RANKING ---
-        const rankingOrdenado = [...familia].sort((a, b) => b.totales - a.totales);
-        document.getElementById('leaderboard-list').innerHTML = rankingOrdenado.map((u, i) => {
-            let podiumClass = "";
-            if (i === 0) podiumClass = "podium-1";
-            if (i === 1) podiumClass = "podium-2";
-            if (i === 2) podiumClass = "podium-3";
-            
-            return `
-                <div class="ranking-card">
-                    <div class="ranking-left">
-                        <span class="position ${podiumClass}">${i + 1}</span>
-                        <span class="ranking-name">${u.nombre} ${u.id === usuarioActivoId ? '👤' : ''}</span>
-                    </div>
-                    <div class="ranking-points">
-                        <div class="total-pts">🌟 ${u.totales} Pts</div>
-                        <div class="current-pts">Bolsillo: 💰 ${u.disponibles}</div>
-                    </div>
-                </div>
-            `;
-        }).join('');
+        // Escuchar base de datos en Tiempo Real (La magia de Firebase)
+        function suscribirTiempoReal() {
+            onSnapshot(doc(db, "clan", "puntuaciones"), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    familiaDatosGlobal = Object.values(data);
+                    renderizarTodo();
+                }
+            });
+        }
 
-        // --- RENDER MISIONES ---
-        document.getElementById('missions-list').innerHTML = misiones.map(m => `
-            <div class="card">
-                <div class="card-info">
-                    <span class="card-title">${m.nombre}</span>
-                    <span class="card-subtitle">${m.desc}</span>
-                    <span class="points-tag points-plus">+${m.puntos} Pts</span>
-                </div>
-                <button class="btn-success" onclick="completarMision(${m.puntos}, '${m.nombre}')">✓ Hecho</button>
-            </div>
-        `).join('');
+        function renderizarTodo() {
+            // Selector de usuarios
+            const select = document.getElementById('user-select');
+            if (select.innerHTML.trim() === "") {
+                select.innerHTML = usuariosIniciales.map(u => `<option value="${u.id}" ${u.id === usuarioActivoId ? 'selected' : ''}>${u.nombre}</option>`).join('');
+            }
 
-        // --- RENDER TIENDA ---
-        const usuarioActual = familia.find(u => u.id === usuarioActivoId);
-        document.getElementById('shop-list').innerHTML = recompensas.map(r => {
-            const puedeComprar = usuarioActual.disponibles >= r.coste;
-            return `
+            // Render Ranking
+            const rankingOrdenado = [...familiaDatosGlobal].sort((a, b) => b.totales - a.totales);
+            document.getElementById('leaderboard-list').innerHTML = rankingOrdenado.map((u, i) => {
+                let podiumClass = i === 0 ? "podium-1" : i === 1 ? "podium-2" : i === 2 ? "podium-3" : "";
+                return `
+                    <div class="ranking-card">
+                        <div class="ranking-left">
+                            <span class="position ${podiumClass}">${i + 1}</span>
+                            <span class="ranking-name">${u.nombre} ${u.id === usuarioActivoId ? '👤' : ''}</span>
+                        </div>
+                        <div class="ranking-points">
+                            <div class="total-pts">🌟 ${u.totales} Pts</div>
+                            <div class="current-pts">Bolsillo: 💰 ${u.disponibles}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Render Misiones
+            document.getElementById('missions-list').innerHTML = misiones.map(m => `
                 <div class="card">
                     <div class="card-info">
-                        <span class="card-title">${r.nombre}</span>
-                        <span class="card-subtitle">${r.desc}</span>
-                        <span class="points-tag points-minus">${r.coste} Pts</span>
+                        <span class="card-title">${m.nombre}</span>
+                        <span class="card-subtitle">${m.desc}</span>
+                        <span class="points-tag points-plus">+${m.puntos} Pts</span>
                     </div>
-                    <button class="btn-accent" style="opacity: ${puedeComprar ? 1 : 0.5}" onclick="comprarRecompensa(${r.coste}, '${r.nombre}')">Canjear</button>
+                    <button class="btn-success" data-puntos="${m.puntos}" data-nombre="${m.nombre}">✓ Hecho</button>
                 </div>
-            `;
-        }).join('');
-    }
+            `).join('');
 
-    // 5. ACCIONES DE JUEGO
-    function completarMision(puntos, nombreMision) {
-        const usuario = familia.find(u => u.id === usuarioActivoId);
-        usuario.totales += puntos;
-        usuario.disponibles += puntos;
-        alert(`¡Buen trabajo ${usuario.nombre}! Has sumado +${puntos} puntos por: "${nombreMision}".`);
-        guardarCambios();
-    }
-
-    function comprarRecompensa(coste, nombrePremio) {
-        const usuario = familia.find(u => u.id === usuarioActivoId);
-        if (usuario.disponibles >= coste) {
-            usuario.disponibles -= coste;
-            alert(`🎉 ¡Canjeado con éxito! Tienes el premio: "${nombrePremio}". ¡Que lo disfrutes!`);
-            guardarCambios();
-        } else {
-            alert(`⚠️ No tienes suficientes puntos acumulados en tu billetera. Te faltan ${coste - usuario.disponibles} puntos.`);
+            // Render Tienda
+            const usuarioActual = familiaDatosGlobal.find(u => u.id === usuarioActivoId) || { disponibles: 0 };
+            document.getElementById('shop-list').innerHTML = recompensas.map(r => {
+                const puedeComprar = usuarioActual.disponibles >= r.coste;
+                return `
+                    <div class="card">
+                        <div class="card-info">
+                            <span class="card-title">${r.nombre}</span>
+                            <span class="card-subtitle">${r.desc}</span>
+                            <span class="points-tag points-minus">${r.coste} Pts</span>
+                        </div>
+                        <button class="btn-accent" style="opacity: ${puedeComprar ? 1 : 0.5}" data-coste="${r.coste}" data-nombre="${r.nombre}">Canjear</button>
+                    </div>
+                `;
+            }).join('');
         }
-    }
 
-    // Inicio automático
-    renderizarTablas();
-</script>
+        // Operaciones Cloud
+        async function completarMision(puntos, nombreMision) {
+            const docRef = doc(db, "clan", "puntuaciones");
+            const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
+            if (!usuario) return;
+
+            const actualizacion = {};
+            actualizacion[`${usuarioActivoId}.totales`] = usuario.totales + puntos;
+            actualizacion[`${usuarioActivoId}.disponibles`] = usuario.disponibles + puntos;
+
+            await updateDoc(docRef, actualizacion);
+            alert(`¡Genial! Has sumado +${puntos} puntos.`);
+        }
+
+        async function comprarRecompensa(coste, nombrePremio) {
+            const docRef = doc(db, "clan", "puntuaciones");
+            const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
+            if (!usuario) return;
+
+            if (usuario.disponibles >= coste) {
+                const actualizacion = {};
+                actualizacion[`${usuarioActivoId}.disponibles`] = usuario.disponibles - coste;
+                
+                await updateDoc(docRef, actualizacion);
+                alert(`🎉 Premio canjeado: "${nombrePremio}"`);
+            } else {
+                alert(`⚠️ Te faltan ${coste - usuario.disponibles} puntos.`);
+            }
+        }
+
+        // Cambios de Pestaña Navegación
+        function switchScreen(screenId, navElement) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`screen-${screenId}`).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            navElement.classList.add('active');
+        }
+
+        // Listeners Globales
+        document.getElementById('user-select').addEventListener('change', (e) => {
+            usuarioActivoId = parseInt(e.target.value);
+            localStorage.setItem('clan_user_activo', usuarioActivoId);
+            renderizarTodo();
+        });
+
+        document.getElementById('nav-ranking').addEventListener('click', function() { switchScreen('ranking', this); });
+        document.getElementById('nav-missions').addEventListener('click', function() { switchScreen('missions', this); });
+        document.getElementById('nav-shop').addEventListener('click', function() { switchScreen('shop', this); });
+
+        // Event delegation para botones dinámicos
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-success')) {
+                const puntos = parseInt(e.target.getAttribute('data-puntos'));
+                const nombre = e.target.getAttribute('data-nombre');
+                completarMision(puntos, nombre);
+            }
+            if (e.target.classList.contains('btn-accent')) {
+                const coste = parseInt(e.target.getAttribute('data-coste'));
+                const nombre = e.target.getAttribute('data-nombre');
+                comprarRecompensa(coste, nombre);
+            }
+        });
+
+        // Ejecución inicial
+        (async () => {
+            await comprobarBaseDeDatos();
+            suscribirTiempoReal();
+        })();
+    </script>
 </body>
 </html>
