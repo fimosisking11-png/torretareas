@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clan Vacacional - Tareas y Premios</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-color: #f7f9fc;
+            --card-bg: #ffffff;
+            --primary: #4f46e5;
+            --primary-light: #eeebff;
+            --success: #10b981;
+            --accent: #f59e0b;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding-bottom: 80px; /* Espacio para la barra inferior */
+        }
+
+        /* Cabecera Fija */
+        header {
+            background-color: var(--card-bg);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .user-selector-container {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        select {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-color);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        /* Contenedor Principal de Pantallas */
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Estilos de Tarjetas / Filas */
+        .card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .points-tag {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            width: fit-content;
+        }
+
+        .points-plus {
+            background-color: #ecfdf5;
+            color: var(--success);
+        }
+
+        .points-minus {
+            background-color: #fffbeb;
+            color: var(--accent);
+        }
+
+        /* Botones */
+        button {
+            border: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-accent {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        /* Tarjeta de Usuario del Ranking */
+        .ranking-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ranking-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .position {
+            font-weight: 700;
+            font-size: 16px;
+            width: 24px;
+            height: 24px;
+            background: var(--bg-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .podium-1 { background-color: #fef3c7; color: #d97706; }
+        .podium-2 { background-color: #f3f4f6; color: #4b5563; }
+        .podium-3 { background-color: #ffedd5; color: #ea580c; }
+
+        .ranking-name {
+            font-weight: 600;
+        }
+
+        .ranking-points {
+            text-align: right;
+        }
+
+        .total-pts {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--primary);
+        }
+
+        .current-pts {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Barra de Navegación Inferior */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 65px;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            color: var(--text-muted);
+            text-decoration: none;
+            cursor: pointer;
+            width: 33.33%;
+            height: 100%;
+            font-size: 12px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CABECERA -->
+    <header>
+        <h1>🏡 Clan Vacacional</h1>
+        <div class="user-selector-container">
+            <label for="user-select"><small>Identidad:</small></label>
+            <select id="user-select" onchange="cambiarUsuario()">
+                <!-- JS autocompleta -->
+            </select>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- PANTALLA 1: RANKING (PRINCIPAL) -->
+        <div id="screen-ranking" class="screen active">
+            <h2>🏆 Clasificación en Tiempo Real</h2>
+            <div id="leaderboard-list"></div>
+        </div>
+
+        <!-- PANTALLA 2: MISIONES -->
+        <div id="screen-missions" class="screen">
+            <h2>🧹 Lista de Misiones</h2>
+            <div id="missions-list"></div>
+        </div>
+
+        <!-- PANTALLA 3: TIENDA -->
+        <div id="screen-shop" class="screen">
+            <h2>🎁 Canjear Recompensas</h2>
+            <div id="shop-list"></div>
+        </div>
+
+    </div>
+
+    <!-- NAVEGACIÓN INFERIOR (ESTILO APP MÓVIL) -->
+    <nav class="nav-bar">
+        <div class="nav-item active" onclick="switchScreen('ranking', this)">
+            <span class="nav-icon">🏆</span>
+            <span>Ranking</span>
+        </div>
+        <div class="nav-item" onclick="switchScreen('missions', this)">
+            <span class="nav-icon">🧹</span>
+            <span>Misiones</span>
+        </div>
+        <div class="nav-item" onclick="switchScreen('shop', this)">
+            <span class="nav-icon">🎁</span>
+            <span>Tienda</span>
+        </div>
+    </nav>
+
+<script>
+    // 1. BASE DE DATOS LOCAL
+    let familia = JSON.parse(localStorage.getItem('clan_vacacional_data')) || [
+        { id: 0, nombre: "Papá", totales: 0, disponibles: 0 },
+        { id: 1, nombre: "Mamá", totales: 0, disponibles: 0 },
+        { id: 2, nombre: "Hijo 1", totales: 0, disponibles: 0 },
+        { id: 3, nombre: "Hijo 2", totales: 0, disponibles: 0 }
+    ];
+
+    const misiones = [
+        { nombre: "Lavar platos y cubiertos", puntos: 15, desc: "Cocina limpia tras comer" },
+        { nombre: "Bajar la basura al contenedor", puntos: 5, desc: "Orgánico y plástico" },
+        { nombre: "Hacer la compra del día", puntos: 30, desc: "Seguir la lista del frigo" },
+        { nombre: "Limpieza a fondo del baño", puntos: 50, desc: "Espejos, ducha e inodoro" },
+        { nombre: "Poner / Tender una lavadora", puntos: 20, desc: "Ropa limpia y bien estirada" }
+    ];
+
+    const recompensas = [
+        { nombre: "Elegir película de la noche", coste: 40, desc: "Decisión absoluta del catálogo" },
+        { nombre: "Exención de tareas mañana", coste: 100, desc: "Día libre de misiones domésticas" },
+        { nombre: "Elegir restaurante para cenar", coste: 150, desc: "Tú decides el destino gastronómico" },
+        { nombre: "Masaje de 15 minutos", coste: 80, desc: "Cortesía del miembro que elijas" }
+    ];
+
+    let usuarioActivoId = parseInt(localStorage.getItem('clan_user_activo')) || 0;
+
+    // 2. CAMBIO DE PANTALLA (Tabs)
+    function switchScreen(screenId, element) {
+        // Desactivar todas las pantallas
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        // Activar seleccionada
+        document.getElementById(`screen-${screenId}`).classList.add('active');
+        
+        // Actualizar estados visuales de los botones de navegación
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        element.classList.add('active');
+
+        // Renderizar la información actualizada
+        renderizarTablas();
+    }
+
+    // 3. ACTUALIZACIÓN DEL ESTADO Y LOCALSTORAGE
+    function guardarCambios() {
+        localStorage.setItem('clan_vacacional_data', JSON.stringify(familia));
+        localStorage.setItem('clan_user_activo', usuarioActivoId);
+        renderizarTablas();
+    }
+
+    function cambiarUsuario() {
+        usuarioActivoId = parseInt(document.getElementById('user-select').value);
+        guardarCambios();
+    }
+
+    // 4. GENERAR INTERFAZ DINÁMICAMENTE
+    function renderizarTablas() {
+        // Selector de identidad
+        const select = document.getElementById('user-select');
+        if (select.innerHTML === "") {
+            select.innerHTML = familia.map(u => `<option value="${u.id}" ${u.id === usuarioActivoId ? 'selected' : ''}>${u.nombre}</option>`).join('');
+        } else {
+            select.value = usuarioActivoId;
+        }
+
+        // --- RENDER RANKING ---
+        const rankingOrdenado = [...familia].sort((a, b) => b.totales - a.totales);
+        document.getElementById('leaderboard-list').innerHTML = rankingOrdenado.map((u, i) => {
+            let podiumClass = "";
+            if (i === 0) podiumClass = "podium-1";
+            if (i === 1) podiumClass = "podium-2";
+            if (i === 2) podiumClass = "podium-3";
+            
+            return `
+                <div class="ranking-card">
+                    <div class="ranking-left">
+                        <span class="position ${podiumClass}">${i + 1}</span>
+                        <span class="ranking-name">${u.nombre} ${u.id === usuarioActivoId ? '👤' : ''}</span>
+                    </div>
+                    <div class="ranking-points">
+                        <div class="total-pts">🌟 ${u.totales} Pts</div>
+                        <div class="current-pts">Bolsillo: 💰 ${u.disponibles}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // --- RENDER MISIONES ---
+        document.getElementById('missions-list').innerHTML = misiones.map(m => `
+            <div class="card">
+                <div class="card-info">
+                    <span class="card-title">${m.nombre}</span>
+                    <span class="card-subtitle">${m.desc}</span>
+                    <span class="points-tag points-plus">+${m.puntos} Pts</span>
+                </div>
+                <button class="btn-success" onclick="completarMision(${m.puntos}, '${m.nombre}')">✓ Hecho</button>
+            </div>
+        `).join('');
+
+        // --- RENDER TIENDA ---
+        const usuarioActual = familia.find(u => u.id === usuarioActivoId);
+        document.getElementById('shop-list').innerHTML = recompensas.map(r => {
+            const puedeComprar = usuarioActual.disponibles >= r.coste;
+            return `
+                <div class="card">
+                    <div class="card-info">
+                        <span class="card-title">${r.nombre}</span>
+                        <span class="card-subtitle">${r.desc}</span>
+                        <span class="points-tag points-minus">${r.coste} Pts</span>
+                    </div>
+                    <button class="btn-accent" style="opacity: ${puedeComprar ? 1 : 0.5}" onclick="comprarRecompensa(${r.coste}, '${r.nombre}')">Canjear</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 5. ACCIONES DE JUEGO
+    function completarMision(puntos, nombreMision) {
+        const usuario = familia.find(u => u.id === usuarioActivoId);
+        usuario.totales += puntos;
+        usuario.disponibles += puntos;
+        alert(`¡Buen trabajo ${usuario.nombre}! Has sumado +${puntos} puntos por: "${nombreMision}".`);
+        guardarCambios();
+    }
+
+    function comprarRecompensa(coste, nombrePremio) {
+        const usuario = familia.find(u => u.id === usuarioActivoId);
+        if (usuario.disponibles >= coste) {
+            usuario.disponibles -= coste;
+            alert(`🎉 ¡Canjeado con éxito! Tienes el premio: "${nombrePremio}". ¡Que lo disfrutes!`);
+            guardarCambios();
+        } else {
+            alert(`⚠️ No tienes suficientes puntos acumulados en tu billetera. Te faltan ${coste - usuario.disponibles} puntos.`);
+        }
+    }
+
+    // Inicio automático
+    renderizarTablas();
+</script>
+</body>
+</html>
