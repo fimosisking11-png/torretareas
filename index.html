@@ -294,7 +294,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Estructura fija de la familia
+        // Estructura fija de la familia con los 18 miembros
         const usuariosIniciales = [
             { id: 0, nombre: "Toni Jr" },
             { id: 1, nombre: "Miriam" },
@@ -333,22 +333,37 @@
         let familiaDatosGlobal = [];
         let usuarioActivoId = parseInt(localStorage.getItem('clan_user_activo')) || 0;
 
-        // Inicializar documento en la nube si no existe
+        // Comprueba e inyecta los nuevos nombres que falten en la nube automáticamente
         async function comprobarBaseDeDatos() {
             const docRef = doc(db, "clan", "puntuaciones");
             const docSnap = await getDoc(docRef);
 
             if (!docSnap.exists()) {
-                // Crear estructura inicial limpia
                 const estructuraInicial = {};
                 usuariosIniciales.forEach(u => {
                     estructuraInicial[u.id] = { id: u.id, nombre: u.nombre, totales: 0, disponibles: 0 };
                 });
                 await setDoc(docRef, estructuraInicial);
+            } else {
+                // Si el documento ya existe pero has añadido nombres nuevos en el código, los añade sin borrar los viejos
+                const dataActual = docSnap.data();
+                const actualizacion = {};
+                let necesitaActualizar = false;
+
+                usuariosIniciales.forEach(u => {
+                    if (!dataActual[u.id]) {
+                        actualizacion[u.id] = { id: u.id, nombre: u.nombre, totales: 0, disponibles: 0 };
+                        necesitaActualizar = true;
+                    }
+                });
+
+                if (necesitaActualizar) {
+                    await updateDoc(docRef, actualizacion);
+                }
             }
         }
 
-        // Escuchar base de datos en Tiempo Real (La magia de Firebase)
+        // Escuchar base de datos en Tiempo Real
         function suscribirTiempoReal() {
             onSnapshot(doc(db, "clan", "puntuaciones"), (docSnap) => {
                 if (docSnap.exists()) {
@@ -360,13 +375,15 @@
         }
 
         function renderizarTodo() {
-            // Selector de usuarios
             const select = document.getElementById('user-select');
-            if (select.innerHTML.trim() === "") {
-                select.innerHTML = usuariosIniciales.map(u => `<option value="${u.id}" ${u.id === usuarioActivoId ? 'selected' : ''}>${u.nombre}</option>`).join('');
-            }
+            
+            // Renderizar el selector ordenado numéricamente por su ID para que no salgan desordenados
+            const usuariosOrdenadosPorId = [...familiaDatosGlobal].sort((a, b) => a.id - b.id);
+            select.innerHTML = usuariosOrdenadosPorId.map(u => 
+                `<option value="${u.id}" ${u.id === usuarioActivoId ? 'selected' : ''}>${u.nombre}</option>`
+            ).join('');
 
-            // Render Ranking
+            // Render Ranking ordenado por puntuación total
             const rankingOrdenado = [...familiaDatosGlobal].sort((a, b) => b.totales - a.totales);
             document.getElementById('leaderboard-list').innerHTML = rankingOrdenado.map((u, i) => {
                 let podiumClass = i === 0 ? "podium-1" : i === 1 ? "podium-2" : i === 2 ? "podium-3" : "";
@@ -457,6 +474,30 @@
             localStorage.setItem('clan_user_activo', usuarioActivoId);
             renderizarTodo();
         });
+
+        document.getElementById('nav-ranking').addEventListener('click', function() { switchScreen('ranking', this); });
+        document.getElementById('nav-missions').addEventListener('click', function() { switchScreen('missions', this); });
+        document.getElementById('nav-shop').addEventListener('click', function() { switchScreen('shop', this); });
+
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-success')) {
+                const puntos = parseInt(e.target.getAttribute('data-puntos'));
+                const nombre = e.target.getAttribute('data-nombre');
+                completarMision(puntos, nombre);
+            }
+            if (e.target.classList.contains('btn-accent')) {
+                const coste = parseInt(e.target.getAttribute('data-coste'));
+                const nombre = e.target.getAttribute('data-nombre');
+                comprarRecompensa(coste, nombre);
+            }
+        });
+
+        // Ejecución secuencial corregida
+        (async () => {
+            await comprobarBaseDeDatos();
+            suscribirTiempoReal();
+        })();
+    </script>
 
         document.getElementById('nav-ranking').addEventListener('click', function() { switchScreen('ranking', this); });
         document.getElementById('nav-missions').addEventListener('click', function() { switchScreen('missions', this); });
