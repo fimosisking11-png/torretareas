@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clan Vacacional - Cloud Realtime</title>
+    <title>Tareas Villa Chica</title>
     <style>
         * {
             box-sizing: border-box;
@@ -498,30 +498,6 @@
             suscribirTiempoReal();
         })();
     </script>
-
-        document.getElementById('nav-ranking').addEventListener('click', function() { switchScreen('ranking', this); });
-        document.getElementById('nav-missions').addEventListener('click', function() { switchScreen('missions', this); });
-        document.getElementById('nav-shop').addEventListener('click', function() { switchScreen('shop', this); });
-
-        // Event delegation para botones dinámicos
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('btn-success')) {
-                const puntos = parseInt(e.target.getAttribute('data-puntos'));
-                const nombre = e.target.getAttribute('data-nombre');
-                completarMision(puntos, nombre);
-            }
-            if (e.target.classList.contains('btn-accent')) {
-                const coste = parseInt(e.target.getAttribute('data-coste'));
-                const nombre = e.target.getAttribute('data-nombre');
-                comprarRecompensa(coste, nombre);
-            }
-        });
-
-        // Ejecución inicial
-        (async () => {
-            await comprobarBaseDeDatos();
-            suscribirTiempoReal();
-        })();
     </script>
 </body>
 </html>
