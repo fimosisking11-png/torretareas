@@ -303,7 +303,7 @@
             <h2>📅 Reservar Turno de Faena</h2>
             <div class="form-calendario">
                 <div class="form-row">
-                    <label for="cal-mision">¿Qué faena vas a hacer?</label>
+                    <label for="cal-mision">¿Qué faena vas a hacer? <span style="color: var(--success); font-size: 11px;">¡Bonus +5 Pts!</span></label>
                     <select id="cal-mision">
                         </select>
                 </div>
@@ -315,7 +315,26 @@
             </div>
 
             <h2>📋 Tareas Planificadas</h2>
-            <div id="calendar-list">Cargando organización...</div>
+            <div id="calendar-list" style="margin-bottom: 30px;">Cargando organización...</div>
+
+            <h2>📜 Historial de Faenas Realizadas</h2>
+            <div style="overflow-x: auto; background: white; border-radius: 12px; border: 1px solid var(--border); margin-top: 10px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                    <thead>
+                        <tr style="background-color: #f9fafb; border-bottom: 1px solid var(--border);">
+                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Fecha Realizado</th>
+                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Quién</th>
+                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Faena</th>
+                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Total Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="faenas-history-table-body">
+                        <tr>
+                            <td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna faena registrada todavía.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -393,6 +412,7 @@
         let familiaDatosGlobal = [];
         let historialDatosGlobal = [];
         let calendarioDatosGlobal = [];
+        let historialFaenasGlobal = [];
         let usuarioActivoId = parseInt(localStorage.getItem('clan_user_activo')) || 0;
 
         async function comprobarBaseDeDatos() {
@@ -437,21 +457,28 @@
                 if (docSnap.exists()) {
                     historialDatosGlobal = Object.values(docSnap.data()).sort((a, b) => b.timestamp - a.timestamp);
                     renderizarHistorial();
-                } else {
-                    historialDatosGlobal = [];
-                    renderizarHistorial();
                 }
             });
 
-            // NUEVO: Escucha del calendario / agenda en tiempo real
+            // Calendario / Agenda
             onSnapshot(doc(db, "clan", "calendario"), (docSnap) => {
                 if (docSnap.exists()) {
-                    // Ordenamos las fechas por orden cronológico (próximas primero)
                     calendarioDatosGlobal = Object.values(docSnap.data()).sort((a, b) => a.fechaRaw.localeCompare(b.fechaRaw));
                     renderizarCalendario();
                 } else {
                     calendarioDatosGlobal = [];
                     renderizarCalendario();
+                }
+            });
+
+            // Historial de Faenas hechas
+            onSnapshot(doc(db, "clan", "historial_faenas"), (docSnap) => {
+                if (docSnap.exists()) {
+                    historialFaenasGlobal = Object.values(docSnap.data()).sort((a, b) => b.timestamp - a.timestamp);
+                    renderizarHistorialFaenas();
+                } else {
+                    historialFaenasGlobal = [];
+                    renderizarHistorialFaenas();
                 }
             });
         }
@@ -510,7 +537,6 @@
                 `;
             }).join('');
 
-            // Rellenar selector de faenas en el calendario una sola vez
             const calMisionSelect = document.getElementById('cal-mision');
             if (calMisionSelect && calMisionSelect.children.length === 0) {
                 calMisionSelect.innerHTML = misiones.map(m => `<option value="${m.nombre}">${m.nombre} (+${m.puntos} pts)</option>`).join('');
@@ -534,7 +560,6 @@
             `).join('');
         }
 
-        // NUEVO: Pinta la lista de turnos en la pestaña Agenda
         function renderizarCalendario() {
             const list = document.getElementById('calendar-list');
             if (!list) return;
@@ -557,6 +582,7 @@
                             </div>
                             <span class="card-title">${c.mision}</span>
                             <span class="card-subtitle">📅 Día: <strong>${c.fechaDisplay}</strong></span>
+                            <span class="points-tag points-plus" style="font-size:11px; padding:2px 6px;">+${c.puntos} Base + Bonus Extra 🔥</span>
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 5px;">
                             <button class="btn-success btn-cal-hecho" data-id="${c.id}" data-mision="${c.mision}" data-puntos="${c.puntos}" style="padding: 6px 12px; font-size: 12px;">✓ Hecho</button>
@@ -565,6 +591,23 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function renderizarHistorialFaenas() {
+            const tbody = document.getElementById('faenas-history-table-body');
+            if (!tbody) return;
+            if (historialFaenasGlobal.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna faena realizada todavía desde la agenda.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = historialFaenasGlobal.map(hf => `
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 10px; color: var(--text-muted); font-size: 13px;">${hf.fechaRealizado}</td>
+                    <td style="padding: 10px; font-weight: 600;">${hf.quien}</td>
+                    <td style="padding: 10px;">🧹 ${hf.mision}</td>
+                    <td style="padding: 10px; font-weight: 700; color: var(--success);">+${hf.puntosTotales} Pts</td>
+                </tr>
+            `).join('');
         }
 
         // Operaciones Cloud
@@ -614,7 +657,6 @@
             }
         }
 
-        // NUEVO: Agendar tarea en Firebase
         async function agregarTurnoCalendario() {
             const misionNombre = document.getElementById('cal-mision').value;
             const fechaSeleccionada = document.getElementById('cal-fecha').value;
@@ -630,7 +672,7 @@
             const puntosFaena = misionEncontrada ? misionEncontrada.puntos : 10;
 
             const partesFecha = fechaSeleccionada.split('-');
-            const fechaDisplay = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`; // Formato DD/MM/AAAA
+            const fechaDisplay = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
 
             const docRefCal = doc(db, "clan", "calendario");
             const idTurno = "turno_" + new Date().getTime();
@@ -646,26 +688,41 @@
             };
 
             await setDoc(docRefCal, nuevoTurno, { merge: true });
-            document.getElementById('cal-fecha').value = ""; // Limpiar el input
-            alert(`📍 Te has apuntado para: ${misionNombre} el día ${fechaDisplay}`);
+            document.getElementById('cal-fecha').value = "";
+            alert(`📍 Reservado: "${misionNombre}" para el día ${fechaDisplay}. ¡Recuerda que tiene bonus extra!`);
         }
 
-        // NUEVO: Eliminar turno de la agenda
+        // Elimina de forma efectiva borrando el nodo completo en Firestore
         async function eliminarTurnoCalendario(idTurno) {
             const docRefCal = doc(db, "clan", "calendario");
-            const actualizacion = {};
-            actualizacion[idTurno] = deleteField; // Para importar deleteField necesitamos otro módulo, usaremos setDoc con el campo vacío o enviando undefined para borrar en Firestore compatible:
-            
-            // Truco sencillo sin importar deleteField: reconstruimos quitando el ID
             const docSnap = await getDoc(docRefCal);
             if(docSnap.exists()){
                 const data = docSnap.data();
-                delete data[idTurno];
-                await setDoc(docRefCal, data);
+                delete data[idTurno]; // Elimina la clave del objeto de manera real
+                await setDoc(docRefCal, data); // Sobrescribe el documento limpio sin ese registro
             }
         }
 
-        // Cambios de Pestaña Navegación
+        // Guarda el log en el historial de faenas completadas
+        async function registrarEnHistorialFaenas(quien, mision, puntosTotales) {
+            const docRefHistorial = doc(db, "clan", "historial_faenas");
+            const ahora = new Date();
+            const fechaFormateada = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) + 
+                                   " " + ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            
+            const idHistorial = "log_" + ahora.getTime();
+            const nuevoRegistro = {};
+            nuevoRegistro[idHistorial] = {
+                timestamp: ahora.getTime(),
+                fechaRealizado: fechaFormateada,
+                quien: quien,
+                mision: mision,
+                puntosTotales: puntosTotales
+            };
+
+            await setDoc(docRefHistorial, nuevoRegistro, { merge: true });
+        }
+
         function switchScreen(screenId, navElement) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(`screen-${screenId}`).classList.add('active');
@@ -698,19 +755,26 @@
                 const nombre = e.target.getAttribute('data-nombre');
                 comprarRecompensa(coste, nombre);
             }
-            // Acción Hecho desde el calendario
+            // Acción Hecho desde la Agenda (Con incentivo de +5 puntos extra)
             if (e.target.classList.contains('btn-cal-hecho')) {
-                const puntos = parseInt(e.target.getAttribute('data-puntos'));
-                const nombre = e.target.getAttribute('data-mision');
+                const puntosBase = parseInt(e.target.getAttribute('data-puntos'));
+                const nombreMision = e.target.getAttribute('data-mision');
                 const id = e.target.getAttribute('data-id');
                 
-                await completarMision(puntos, nombre);
+                const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
+                if (!usuario) return;
+
+                const puntosConIncentivo = puntosBase + 5; // Bonus por cumplir la reserva
+
+                // Guardamos en historial de faenas, sumamos puntos y borramos el pendiente de la agenda
+                await registrarEnHistorialFaenas(usuario.nombre, nombreMision, puntosConIncentivo);
+                await completarMision(puntosConIncentivo, `${nombreMision} (Planificado + Bonus)`);
                 await eliminarTurnoCalendario(id);
             }
-            // Acción Quitar/Cancelar desde el calendario
+            // Quitar turno borrando de forma real en la base de datos
             if (e.target.classList.contains('btn-cal-eliminar')) {
                 const id = e.target.getAttribute('data-id');
-                if(confirm("¿Quieres quitar esta faena de la lista?")) {
+                if(confirm("¿Seguro que quieres quitar esta faena de la lista de planificación?")) {
                     await eliminarTurnoCalendario(id);
                 }
             }
