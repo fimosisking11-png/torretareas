@@ -235,28 +235,43 @@
         <div class="user-selector-container">
             <label for="user-select"><small>Identidad:</small></label>
             <select id="user-select">
-                <!-- Se rellena dinámicamente -->
-            </select>
+                </select>
         </div>
     </header>
 
     <div class="container">
-        <!-- PANTALLA 1: RANKING -->
         <div id="screen-ranking" class="screen active">
             <h2>🏆 Clasificación en Tiempo Real</h2>
             <div id="leaderboard-list">Cargando clasificación...</div>
         </div>
 
-        <!-- PANTALLA 2: MISIONES -->
         <div id="screen-missions" class="screen">
             <h2>🧹 Lista de Misiones</h2>
             <div id="missions-list"></div>
         </div>
 
-        <!-- PANTALLA 3: TIENDA -->
         <div id="screen-shop" class="screen">
             <h2>🎁 Canjear Recompensas</h2>
             <div id="shop-list"></div>
+
+            <h2 style="margin-top: 30px;">📜 Historial de Canjes</h2>
+            <div style="overflow-x: auto; background: white; border-radius: 12px; border: 1px solid var(--border); margin-top: 10px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                    <thead>
+                        <tr style="background-color: #f9fafb; border-bottom: 1px solid var(--border);">
+                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Fecha</th>
+                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Quién</th>
+                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Premio</th>
+                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Coste</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <tr>
+                            <td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Cargando historial...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -275,7 +290,6 @@
         </div>
     </nav>
 
-    <!-- INTEGRACIÓN MÓDULO FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -296,25 +310,25 @@
 
         // Estructura fija de la familia con los 18 miembros
         const usuariosIniciales = [
-    { id: 0, nombre: "Toni Jr", foto: "fotos/Toni.png" },
-    { id: 1, nombre: "Miriam", foto: "fotos/Mama.jpg" },
-    { id: 2, nombre: "Toni Padre", foto: "fotos/Papa.jpg" },
-    { id: 3, nombre: "Héctor", foto: "fotos/hector.jpg" },
-    { id: 4, nombre: "Amara", foto: "fotos/Amara.jpg" },
-    { id: 5, nombre: "Ester", foto: "fotos/Ester.jpg" },
-    { id: 6, nombre: "Lidia", foto: "fotos/Lidia.jpg" },
-    { id: 7, nombre: "Mircea", foto: "fotos/Mircea.jpg" },
-    { id: 8, nombre: "Montse", foto: "fotos/Montse.jpg" },
-    { id: 9, nombre: "Nico", foto: "fotos/Nico.jpg" },
-    { id: 10, nombre: "Didac", foto: "fotos/Sosi.jpg" },
-    { id: 11, nombre: "Tata Meli", foto: "fotos/Tatameli.jpg" },
-    { id: 12, nombre: "Tata Osa", foto: "fotos/Tataosa.jpg" },
-    { id: 13, nombre: "Titi", foto: "fotos/Titi.jpg" },
-    { id: 14, nombre: "Tito Ángel", foto: "fotos/Titoangel.jpg" },
-    { id: 15, nombre: "Tito Rafa", foto: "fotos/Titorafa.jpg" },
-    { id: 16, nombre: "Andrea", foto: "fotos/Andrea.jpg" },
-    { id: 17, nombre: "Cloe", foto: "fotos/Cloe.jpg" },
-];
+            { id: 0, nombre: "Toni Jr", foto: "fotos/Toni.png" },
+            { id: 1, nombre: "Miriam", foto: "fotos/Mama.jpg" },
+            { id: 2, nombre: "Toni Padre", foto: "fotos/Papa.jpg" },
+            { id: 3, nombre: "Héctor", foto: "fotos/hector.jpg" },
+            { id: 4, nombre: "Amara", foto: "fotos/Amara.jpg" },
+            { id: 5, nombre: "Ester", foto: "fotos/Ester.jpg" },
+            { id: 6, nombre: "Lidia", foto: "fotos/Lidia.jpg" },
+            { id: 7, nombre: "Mircea", foto: "fotos/Mircea.jpg" },
+            { id: 8, nombre: "Montse", foto: "fotos/Montse.jpg" },
+            { id: 9, nombre: "Nico", foto: "fotos/Nico.jpg" },
+            { id: 10, nombre: "Didac", foto: "fotos/Sosi.jpg" },
+            { id: 11, nombre: "Tata Meli", foto: "fotos/Tatameli.jpg" },
+            { id: 12, nombre: "Tata Osa", foto: "fotos/Tataosa.jpg" },
+            { id: 13, nombre: "Titi", foto: "fotos/Titi.jpg" },
+            { id: 14, nombre: "Tito Ángel", foto: "fotos/Titoangel.jpg" },
+            { id: 15, nombre: "Tito Rafa", foto: "fotos/Titorafa.jpg" },
+            { id: 16, nombre: "Andrea", foto: "fotos/Andrea.jpg" },
+            { id: 17, nombre: "Cloe", foto: "fotos/Cloe.jpg" },
+        ];
 
         const misiones = [
             { nombre: "Lavar platos y cubiertos", puntos: 15, desc: "Cocina limpia tras comer" },
@@ -331,6 +345,7 @@
         ];
 
         let familiaDatosGlobal = [];
+        let historialDatosGlobal = [];
         let usuarioActivoId = parseInt(localStorage.getItem('clan_user_activo')) || 0;
 
         // Comprueba e inyecta los nuevos nombres que falten en la nube automáticamente
@@ -345,7 +360,6 @@
                 });
                 await setDoc(docRef, estructuraInicial);
             } else {
-                // Si el documento ya existe pero has añadido nombres nuevos en el código, los añade sin borrar los viejos
                 const dataActual = docSnap.data();
                 const actualizacion = {};
                 let necesitaActualizar = false;
@@ -365,11 +379,25 @@
 
         // Escuchar base de datos en Tiempo Real
         function suscribirTiempoReal() {
+            // Escucha de puntuaciones
             onSnapshot(doc(db, "clan", "puntuaciones"), (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     familiaDatosGlobal = Object.values(data);
                     renderizarTodo();
+                }
+            });
+
+            // Escucha de historial de canjes
+            onSnapshot(doc(db, "clan", "historial"), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    // Ordenamos para que los canjes más recientes salgan arriba del todo
+                    historialDatosGlobal = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
+                    renderizarHistorial();
+                } else {
+                    historialDatosGlobal = [];
+                    renderizarHistorial();
                 }
             });
         }
@@ -391,7 +419,7 @@
                 // Buscamos la ruta de la foto en la lista local usando el ID de Firebase
                 const usuarioLocal = usuariosIniciales.find(local => local.id === u.id);
                 // Si por alguna razón no encuentra el usuario local, usa una por defecto
-                let urlFoto = usuarioLocal ? usuarioLocal.foto : "fotos/tonijr.png";
+                let urlFoto = usuarioLocal ? usuarioLocal.foto : "fotos/Toni.png";
 
                 return `
                     <div class="ranking-card">
@@ -437,6 +465,26 @@
             }).join('');
         }
 
+        // Función para pintar las filas de la tabla de historial
+        function renderizarHistorial() {
+            const tbody = document.getElementById('history-table-body');
+            if (!tbody) return;
+
+            if (historialDatosGlobal.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ningún premio canjeado todavía.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = historialDatosGlobal.map(h => `
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 10px; color: var(--text-muted); font-size: 13px;">${h.fecha}</td>
+                    <td style="padding: 10px; font-weight: 600;">${h.quien}</td>
+                    <td style="padding: 10px;">🎉 ${h.premio}</td>
+                    <td style="padding: 10px; font-weight: 700; color: #dc2626;">-${h.coste} Pts</td>
+                </tr>
+            `).join('');
+        }
+
         // Operaciones Cloud
         async function completarMision(puntos, nombreMision) {
             const docRef = doc(db, "clan", "puntuaciones");
@@ -452,15 +500,35 @@
         }
 
         async function comprarRecompensa(coste, nombrePremio) {
-            const docRef = doc(db, "clan", "puntuaciones");
+            const docRefPuntos = doc(db, "clan", "puntuaciones");
+            const docRefHistorial = doc(db, "clan", "historial");
             const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
             if (!usuario) return;
 
             if (usuario.disponibles >= coste) {
+                // 1. Descontar los puntos en la lista de puntuaciones
                 const actualizacion = {};
                 actualizacion[`${usuarioActivoId}.disponibles`] = usuario.disponibles - coste;
+                await updateDoc(docRefPuntos, actualizacion);
                 
-                await updateDoc(docRef, actualizacion);
+                // 2. Preparar los datos del historial diario con la hora local
+                const ahora = new Date();
+                const fechaFormateada = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) + 
+                                       " " + ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                
+                const idCanje = "canje_" + ahora.getTime();
+
+                // 3. Registrar el canje en la colección historial sin tocar los anteriores
+                const registroCanje = {};
+                registroCanje[idCanje] = {
+                    timestamp: ahora.getTime(),
+                    fecha: fechaFormateada,
+                    quien: usuario.nombre,
+                    premio: nombrePremio,
+                    coste: coste
+                };
+
+                await setDoc(docRefHistorial, registroCanje, { merge: true });
                 alert(`🎉 Premio canjeado: "${nombrePremio}"`);
             } else {
                 alert(`⚠️ Te faltan ${coste - usuario.disponibles} puntos.`);
@@ -504,7 +572,6 @@
             await comprobarBaseDeDatos();
             suscribirTiempoReal();
         })();
-    </script>
     </script>
 </body>
 </html>
