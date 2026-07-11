@@ -55,7 +55,7 @@
             gap: 10px;
         }
 
-        select {
+        select, input[type="date"] {
             padding: 6px 12px;
             border-radius: 8px;
             border: 1px solid var(--border);
@@ -105,6 +105,8 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
+            flex: 1;
+            margin-right: 10px;
         }
 
         .card-title {
@@ -151,6 +153,7 @@
 
         .btn-success { background-color: var(--success); color: white; }
         .btn-accent { background-color: var(--accent); color: white; }
+        .btn-danger { background-color: #ef4444; color: white; }
 
         .ranking-card {
             background: var(--card-bg);
@@ -190,6 +193,28 @@
         .total-pts { font-weight: 700; font-size: 15px; color: var(--primary); }
         .current-pts { font-size: 12px; color: var(--text-muted); }
 
+        .form-calendario {
+            background: white;
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-row label {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
         .nav-bar {
             position: fixed;
             bottom: 0;
@@ -214,7 +239,7 @@
             color: var(--text-muted);
             text-decoration: none;
             cursor: pointer;
-            width: 33.33%;
+            width: 25%;
             height: 100%;
             font-size: 12px;
             font-weight: 500;
@@ -267,11 +292,30 @@
                     </thead>
                     <tbody id="history-table-body">
                         <tr>
-                            <td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Cargando historial...</td>
+                            <td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ningún premio canjeado todavía.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <div id="screen-calendar" class="screen">
+            <h2>📅 Reservar Turno de Faena</h2>
+            <div class="form-calendario">
+                <div class="form-row">
+                    <label for="cal-mision">¿Qué faena vas a hacer?</label>
+                    <select id="cal-mision">
+                        </select>
+                </div>
+                <div class="form-row">
+                    <label for="cal-fecha">¿Qué día la vas a hacer?</label>
+                    <input type="date" id="cal-fecha">
+                </div>
+                <button class="btn-success" id="btn-reservar-turno" style="width: 100%; margin-top: 5px;">📍 Reservar mi día</button>
+            </div>
+
+            <h2>📋 Tareas Planificadas</h2>
+            <div id="calendar-list">Cargando organización...</div>
         </div>
     </div>
 
@@ -288,13 +332,16 @@
             <span class="nav-icon">🎁</span>
             <span>Tienda</span>
         </div>
+        <div class="nav-item" id="nav-calendar">
+            <span class="nav-icon">📅</span>
+            <span>Agenda</span>
+        </div>
     </nav>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Tus credenciales reales proporcionadas
         const firebaseConfig = {
             apiKey: "AIzaSyBq--uu5MuZYWdHy9n02Yb0YDmIyu78bbo",
             authDomain: "torre-26e99.firebaseapp.com",
@@ -308,7 +355,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Estructura fija de la familia con los 18 miembros
         const usuariosIniciales = [
             { id: 0, nombre: "Toni Jr", foto: "fotos/Toni.png" },
             { id: 1, nombre: "Miriam", foto: "fotos/Mama.jpg" },
@@ -346,9 +392,9 @@
 
         let familiaDatosGlobal = [];
         let historialDatosGlobal = [];
+        let calendarioDatosGlobal = [];
         let usuarioActivoId = parseInt(localStorage.getItem('clan_user_activo')) || 0;
 
-        // Comprueba e inyecta los nuevos nombres que falten en la nube automáticamente
         async function comprobarBaseDeDatos() {
             const docRef = doc(db, "clan", "puntuaciones");
             const docSnap = await getDoc(docRef);
@@ -377,48 +423,50 @@
             }
         }
 
-        // Escuchar base de datos en Tiempo Real
         function suscribirTiempoReal() {
-            // Escucha de puntuaciones
+            // Puntuaciones
             onSnapshot(doc(db, "clan", "puntuaciones"), (docSnap) => {
                 if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    familiaDatosGlobal = Object.values(data);
+                    familiaDatosGlobal = Object.values(docSnap.data());
                     renderizarTodo();
                 }
             });
 
-            // Escucha de historial de canjes
+            // Historial de tienda
             onSnapshot(doc(db, "clan", "historial"), (docSnap) => {
                 if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    // Ordenamos para que los canjes más recientes salgan arriba del todo
-                    historialDatosGlobal = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
+                    historialDatosGlobal = Object.values(docSnap.data()).sort((a, b) => b.timestamp - a.timestamp);
                     renderizarHistorial();
                 } else {
                     historialDatosGlobal = [];
                     renderizarHistorial();
                 }
             });
+
+            // NUEVO: Escucha del calendario / agenda en tiempo real
+            onSnapshot(doc(db, "clan", "calendario"), (docSnap) => {
+                if (docSnap.exists()) {
+                    // Ordenamos las fechas por orden cronológico (próximas primero)
+                    calendarioDatosGlobal = Object.values(docSnap.data()).sort((a, b) => a.fechaRaw.localeCompare(b.fechaRaw));
+                    renderizarCalendario();
+                } else {
+                    calendarioDatosGlobal = [];
+                    renderizarCalendario();
+                }
+            });
         }
 
         function renderizarTodo() {
             const select = document.getElementById('user-select');
-            
-            // Renderizar el selector ordenado numéricamente por su ID para que no salgan desordenados
             const usuariosOrdenadosPorId = [...familiaDatosGlobal].sort((a, b) => a.id - b.id);
             select.innerHTML = usuariosOrdenadosPorId.map(u => 
                 `<option value="${u.id}" ${u.id === usuarioActivoId ? 'selected' : ''}>${u.nombre}</option>`
             ).join('');
 
-            // Render Ranking ordenado por puntuación total con FOTOS LOCALES
             const rankingOrdenado = [...familiaDatosGlobal].sort((a, b) => b.totales - a.totales);
             document.getElementById('leaderboard-list').innerHTML = rankingOrdenado.map((u, i) => {
                 let podiumClass = i === 0 ? "podium-1" : i === 1 ? "podium-2" : i === 2 ? "podium-3" : "";
-                
-                // Buscamos la ruta de la foto en la lista local usando el ID de Firebase
                 const usuarioLocal = usuariosIniciales.find(local => local.id === u.id);
-                // Si por alguna razón no encuentra el usuario local, usa una por defecto
                 let urlFoto = usuarioLocal ? usuarioLocal.foto : "fotos/Toni.png";
 
                 return `
@@ -436,7 +484,6 @@
                 `;
             }).join('');
 
-            // Render Misiones
             document.getElementById('missions-list').innerHTML = misiones.map(m => `
                 <div class="card">
                     <div class="card-info">
@@ -448,7 +495,6 @@
                 </div>
             `).join('');
 
-            // Render Tienda
             const usuarioActual = familiaDatosGlobal.find(u => u.id === usuarioActivoId) || { disponibles: 0 };
             document.getElementById('shop-list').innerHTML = recompensas.map(r => {
                 const puedeComprar = usuarioActual.disponibles >= r.coste;
@@ -463,18 +509,21 @@
                     </div>
                 `;
             }).join('');
+
+            // Rellenar selector de faenas en el calendario una sola vez
+            const calMisionSelect = document.getElementById('cal-mision');
+            if (calMisionSelect && calMisionSelect.children.length === 0) {
+                calMisionSelect.innerHTML = misiones.map(m => `<option value="${m.nombre}">${m.nombre} (+${m.puntos} pts)</option>`).join('');
+            }
         }
 
-        // Función para pintar las filas de la tabla de historial
         function renderizarHistorial() {
             const tbody = document.getElementById('history-table-body');
             if (!tbody) return;
-
             if (historialDatosGlobal.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ningún premio canjeado todavía.</td></tr>`;
                 return;
             }
-
             tbody.innerHTML = historialDatosGlobal.map(h => `
                 <tr style="border-bottom: 1px solid var(--border);">
                     <td style="padding: 10px; color: var(--text-muted); font-size: 13px;">${h.fecha}</td>
@@ -483,6 +532,39 @@
                     <td style="padding: 10px; font-weight: 700; color: #dc2626;">-${h.coste} Pts</td>
                 </tr>
             `).join('');
+        }
+
+        // NUEVO: Pinta la lista de turnos en la pestaña Agenda
+        function renderizarCalendario() {
+            const list = document.getElementById('calendar-list');
+            if (!list) return;
+
+            if (calendarioDatosGlobal.length === 0) {
+                list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">No hay faenas planificadas. ¡Sé el primero en apuntarte!</p>`;
+                return;
+            }
+
+            list.innerHTML = calendarioDatosGlobal.map(c => {
+                const usuarioLocal = usuariosIniciales.find(local => local.nombre === c.quien);
+                let urlFoto = usuarioLocal ? usuarioLocal.foto : "fotos/Toni.png";
+
+                return `
+                    <div class="card" style="border-left: 4px solid var(--primary);">
+                        <div class="card-info">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <img src="${urlFoto}" style="width: 25px; height: 25px; border-radius: 50%; object-fit: cover;">
+                                <span style="font-weight: 700; font-size: 14px; color: var(--primary);">${c.quien}</span>
+                            </div>
+                            <span class="card-title">${c.mision}</span>
+                            <span class="card-subtitle">📅 Día: <strong>${c.fechaDisplay}</strong></span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <button class="btn-success btn-cal-hecho" data-id="${c.id}" data-mision="${c.mision}" data-puntos="${c.puntos}" style="padding: 6px 12px; font-size: 12px;">✓ Hecho</button>
+                            <button class="btn-danger btn-cal-eliminar" data-id="${c.id}" style="padding: 6px 12px; font-size: 12px; background-color: #f3f4f6; color: #ef4444; border: 1px solid #ef4444;">❌ Quitar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Operaciones Cloud
@@ -506,19 +588,16 @@
             if (!usuario) return;
 
             if (usuario.disponibles >= coste) {
-                // 1. Descontar los puntos en la lista de puntuaciones
                 const actualizacion = {};
                 actualizacion[`${usuarioActivoId}.disponibles`] = usuario.disponibles - coste;
                 await updateDoc(docRefPuntos, actualizacion);
                 
-                // 2. Preparar los datos del historial diario con la hora local
                 const ahora = new Date();
                 const fechaFormateada = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) + 
                                        " " + ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
                 
                 const idCanje = "canje_" + ahora.getTime();
 
-                // 3. Registrar el canje en la colección historial sin tocar los anteriores
                 const registroCanje = {};
                 registroCanje[idCanje] = {
                     timestamp: ahora.getTime(),
@@ -532,6 +611,57 @@
                 alert(`🎉 Premio canjeado: "${nombrePremio}"`);
             } else {
                 alert(`⚠️ Te faltan ${coste - usuario.disponibles} puntos.`);
+            }
+        }
+
+        // NUEVO: Agendar tarea en Firebase
+        async function agregarTurnoCalendario() {
+            const misionNombre = document.getElementById('cal-mision').value;
+            const fechaSeleccionada = document.getElementById('cal-fecha').value;
+            const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
+
+            if (!fechaSeleccionada) {
+                alert("⚠️ Por favor, selecciona un día en el calendario.");
+                return;
+            }
+            if (!usuario) return;
+
+            const misionEncontrada = misiones.find(m => m.nombre === misionNombre);
+            const puntosFaena = misionEncontrada ? misionEncontrada.puntos : 10;
+
+            const partesFecha = fechaSeleccionada.split('-');
+            const fechaDisplay = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`; // Formato DD/MM/AAAA
+
+            const docRefCal = doc(db, "clan", "calendario");
+            const idTurno = "turno_" + new Date().getTime();
+
+            const nuevoTurno = {};
+            nuevoTurno[idTurno] = {
+                id: idTurno,
+                quien: usuario.nombre,
+                mision: misionNombre,
+                puntos: puntosFaena,
+                fechaRaw: fechaSeleccionada,
+                fechaDisplay: fechaDisplay
+            };
+
+            await setDoc(docRefCal, nuevoTurno, { merge: true });
+            document.getElementById('cal-fecha').value = ""; // Limpiar el input
+            alert(`📍 Te has apuntado para: ${misionNombre} el día ${fechaDisplay}`);
+        }
+
+        // NUEVO: Eliminar turno de la agenda
+        async function eliminarTurnoCalendario(idTurno) {
+            const docRefCal = doc(db, "clan", "calendario");
+            const actualizacion = {};
+            actualizacion[idTurno] = deleteField; // Para importar deleteField necesitamos otro módulo, usaremos setDoc con el campo vacío o enviando undefined para borrar en Firestore compatible:
+            
+            // Truco sencillo sin importar deleteField: reconstruimos quitando el ID
+            const docSnap = await getDoc(docRefCal);
+            if(docSnap.exists()){
+                const data = docSnap.data();
+                delete data[idTurno];
+                await setDoc(docRefCal, data);
             }
         }
 
@@ -553,9 +683,12 @@
         document.getElementById('nav-ranking').addEventListener('click', function() { switchScreen('ranking', this); });
         document.getElementById('nav-missions').addEventListener('click', function() { switchScreen('missions', this); });
         document.getElementById('nav-shop').addEventListener('click', function() { switchScreen('shop', this); });
+        document.getElementById('nav-calendar').addEventListener('click', function() { switchScreen('calendar', this); });
+        
+        document.getElementById('btn-reservar-turno').addEventListener('click', agregarTurnoCalendario);
 
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('btn-success')) {
+        document.addEventListener('click', async function(e) {
+            if (e.target.classList.contains('btn-success') && !e.target.classList.contains('btn-cal-hecho')) {
                 const puntos = parseInt(e.target.getAttribute('data-puntos'));
                 const nombre = e.target.getAttribute('data-nombre');
                 completarMision(puntos, nombre);
@@ -565,9 +698,24 @@
                 const nombre = e.target.getAttribute('data-nombre');
                 comprarRecompensa(coste, nombre);
             }
+            // Acción Hecho desde el calendario
+            if (e.target.classList.contains('btn-cal-hecho')) {
+                const puntos = parseInt(e.target.getAttribute('data-puntos'));
+                const nombre = e.target.getAttribute('data-mision');
+                const id = e.target.getAttribute('data-id');
+                
+                await completarMision(puntos, nombre);
+                await eliminarTurnoCalendario(id);
+            }
+            // Acción Quitar/Cancelar desde el calendario
+            if (e.target.classList.contains('btn-cal-eliminar')) {
+                const id = e.target.getAttribute('data-id');
+                if(confirm("¿Quieres quitar esta faena de la lista?")) {
+                    await eliminarTurnoCalendario(id);
+                }
+            }
         });
 
-        // Ejecución secuencial corregida
         (async () => {
             await comprobarBaseDeDatos();
             suscribirTiempoReal();
