@@ -55,7 +55,7 @@
             gap: 10px;
         }
 
-        select, input[type="date"] {
+        select, input[type="date"], input[type="number"] {
             padding: 6px 12px;
             border-radius: 8px;
             border: 1px solid var(--border);
@@ -250,9 +250,9 @@
             color: var(--text-muted);
             text-decoration: none;
             cursor: pointer;
-            width: 25%;
+            width: 20%;
             height: 100%;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
         }
 
@@ -261,7 +261,7 @@
             font-weight: 700;
         }
 
-        .nav-icon { font-size: 20px; }
+        .nav-icon { font-size: 18px; }
         
         .table-responsive {
             overflow-x: auto; 
@@ -289,6 +289,39 @@
         .table-custom td {
             padding: 10px;
             border-bottom: 1px solid var(--border);
+        }
+
+        /* Estilos minijuegos */
+        .game-box {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .game-container-area {
+            background: var(--bg-color);
+            border-radius: 10px;
+            min-height: 120px;
+            position: relative;
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            overflow: hidden;
+        }
+        #click-target {
+            position: absolute;
+            background: #ef4444;
+            color: white;
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 50%;
+            font-size: 14px;
+            cursor: pointer;
+            user-select: none;
         }
     </style>
 </head>
@@ -396,6 +429,41 @@
                 </table>
             </div>
         </div>
+
+        <div id="screen-games" class="screen">
+            <h2>🎮 Retos y Juegos Diarios</h2>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Completa los juegos para conseguir puntos extra. ¡Solo un intento ganador por día!</p>
+
+            <div class="game-box" id="game1-box">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:700; font-size:16px;">1️⃣ El Número Secreto</span>
+                    <span class="points-tag points-plus">+5 Pts</span>
+                </div>
+                <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">Adivina el número del 1 al 10 en 3 intentos.</p>
+                
+                <div class="game-container-area" id="g1-area">
+                    <div id="g1-controls">
+                        <input type="number" id="g1-input" min="1" max="10" placeholder="Ej: 5" style="width:80px; text-align:center;">
+                        <button class="btn-success" id="btn-g1-probar" style="padding:6px 12px; font-size:13px; margin-left:5px;">Probar</button>
+                    </div>
+                    <p id="g1-msg" style="margin-top:8px; font-size:13px; font-weight:600; color:var(--primary);"></p>
+                </div>
+            </div>
+
+            <div class="game-box" id="game2-box">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:700; font-size:16px;">2️⃣ Reflejos Rápidos</span>
+                    <span class="points-tag points-plus">+5 Pts</span>
+                </div>
+                <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">Caza al botón rojo 5 veces antes de que se acabe el tiempo.</p>
+                
+                <div class="game-container-area" id="g2-area" style="min-height: 160px;">
+                    <button class="btn-accent" id="btn-g2-start">🎯 Empezar Juego</button>
+                    <span id="click-target" style="display:none;">💥 ¡AQUÍ!</span>
+                    <p id="g2-msg" style="margin-top:8px; font-size:13px; font-weight:600; color:var(--primary);"></p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <nav class="nav-bar">
@@ -414,6 +482,10 @@
         <div class="nav-item" id="nav-calendar">
             <span class="nav-icon">📅</span>
             <span>Agenda</span>
+        </div>
+        <div class="nav-item" id="nav-games">
+            <span class="nav-icon">🎮</span>
+            <span>Juegos</span>
         </div>
     </nav>
 
@@ -452,7 +524,7 @@
             { id: 14, nombre: "Tito Ángel", foto: "fotos/Titoangel.jpg" },
             { id: 15, nombre: "Tito Rafa", foto: "fotos/Titorafa.jpg" },
             { id: 16, nombre: "Andrea", foto: "fotos/Andrea.jpg" },
-            { id: 17, font: "fotos/Cloe.jpg", nombre: "Cloe" }
+            { id: 17, nombre: "Cloe", foto: "fotos/Cloe.jpg" }
         ];
 
         const misiones = [
@@ -474,6 +546,12 @@
         let calendarioDatosGlobal = [];
         let historialFaenasGlobal = [];
         let usuarioActivoId = parseInt(localStorage.getItem('clan_user_activo')) || 0;
+
+        // Variables de lógica de juegos
+        let g1NumeroSecreto = Math.floor(Math.random() * 10) + 1;
+        let g1Intentos = 3;
+        let g2ClicksRestantes = 5;
+        let g2Timer = null;
 
         async function comprobarBaseDeDatos() {
             const docRef = doc(db, "clan", "puntuaciones");
@@ -508,6 +586,7 @@
                 if (docSnap.exists()) {
                     familiaDatosGlobal = Object.values(docSnap.data());
                     renderizarTodo();
+                    comprobarBloqueoJuegos();
                 }
             });
 
@@ -687,6 +766,135 @@
             }
         }
 
+        // CONTROL DIARIO DE MINIJUEGOS (Por usuario activo y fecha)
+        function getFechaHoyStr() {
+            const hoy = new Date();
+            return hoy.getFullYear() + "-" + (hoy.getMonth() + 1) + "-" + hoy.getDate();
+        }
+
+        function comprobarBloqueoJuegos() {
+            const hoyStr = getFechaHoyStr();
+            
+            // Comprobar Juego 1
+            const g1Completado = localStorage.getItem(`g1_${usuarioActivoId}_${hoyStr}`);
+            const g1Area = document.getElementById('g1-area');
+            if (g1Completado) {
+                g1Area.innerHTML = `<span style="color: var(--success); font-weight:700;">✅ ¡Juego Completado hoy! (+5 Pts sumados)</span>`;
+            } else {
+                g1Area.innerHTML = `
+                    <div id="g1-controls">
+                        <input type="number" id="g1-input" min="1" max="10" placeholder="Ej: 5" style="width:80px; text-align:center;">
+                        <button class="btn-success" id="btn-g1-probar" style="padding:6px 12px; font-size:13px; margin-left:5px;">Probar</button>
+                    </div>
+                    <p id="g1-msg" style="margin-top:8px; font-size:13px; font-weight:600; color:var(--primary);">Intentos restantes: ${g1Intentos}</p>
+                `;
+                document.getElementById('btn-g1-probar').addEventListener('click', jugarJuego1);
+            }
+
+            // Comprobar Juego 2
+            const g2Completado = localStorage.getItem(`g2_${usuarioActivoId}_${hoyStr}`);
+            const g2Area = document.getElementById('g2-area');
+            if (g2Completado) {
+                g2Area.innerHTML = `<span style="color: var(--success); font-weight:700;">✅ ¡Juego Completado hoy! (+5 Pts sumados)</span>`;
+            } else {
+                g2Area.innerHTML = `
+                    <button class="btn-accent" id="btn-g2-start">🎯 Empezar Juego</button>
+                    <span id="click-target" style="display:none; position:absolute; background:#ef4444; color:white; font-weight:bold; padding:8px 12px; border-radius:50%; font-size:13px; cursor:pointer; user-select:none;">💥 ¡AQUÍ!</span>
+                    <p id="g2-msg" style="margin-top:8px; font-size:13px; font-weight:600; color:var(--primary);"></p>
+                `;
+                document.getElementById('btn-g2-start').addEventListener('click', iniciarJuego2);
+                document.getElementById('click-target').addEventListener('click', clickTargetJuego2);
+            }
+        }
+
+        // Lógica de Juegos
+        async function jugarJuego1() {
+            const input = document.getElementById('g1-input');
+            const msg = document.getElementById('g1-msg');
+            const num = parseInt(input.value);
+
+            if (!num || num < 1 || num > 10) {
+                alert("Mete un número válido entre 1 y 10.");
+                return;
+            }
+
+            g1Intentos--;
+
+            if (num === g1NumeroSecreto) {
+                localStorage.setItem(`g1_${usuarioActivoId}_${getFechaHoyStr()}`, "true");
+                const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
+                if (usuario) await registrarEnHistorialFaenas(usuario.nombre, "Minijuego: Número Secreto", 5, "directa");
+                await completarMision(5, "Juego 1 Diario Acertado");
+                g1Intentos = 3;
+                g1NumeroSecreto = Math.floor(Math.random() * 10) + 1;
+                comprobarBloqueoJuegos();
+            } else if (g1Intentos <= 0) {
+                msg.innerText = `💥 ¡Perdiste! El número era el ${g1NumeroSecreto}. Reiniciando...`;
+                g1Intentos = 3;
+                g1NumeroSecreto = Math.floor(Math.random() * 10) + 1;
+                setTimeout(comprobarBloqueoJuegos, 2000);
+            } else {
+                msg.innerText = num > g1NumeroSecreto ? `📉 Más bajo. Te quedan ${g1Intentos} intentos.` : `📈 Más alto. Te quedan ${g1Intentos} intentos.`;
+            }
+        }
+
+        function iniciarJuego2() {
+            document.getElementById('btn-g2-start').style.display = "none";
+            const target = document.getElementById('click-target');
+            const msg = document.getElementById('g2-msg');
+            
+            g2ClicksRestantes = 5;
+            msg.innerText = `Cazas restantes: ${g2ClicksRestantes}`;
+            target.style.display = "block";
+            moverTargetJuego2();
+
+            let tiempoTotal = 6; // 6 segundos
+            g2Timer = setInterval(() => {
+                tiempoTotal--;
+                if (tiempoTotal <= 0) {
+                    clearInterval(g2Timer);
+                    target.style.display = "none";
+                    msg.innerText = "❌ ¡Tiempo agotado! Inténtalo de nuevo.";
+                    document.getElementById('btn-g2-start').style.display = "block";
+                } else {
+                    msg.innerText = `⏳ ¡Rápido! Cazas: ${g2ClicksRestantes} | Tiempo: ${tiempoTotal}s`;
+                }
+            }, 1000);
+        }
+
+        function moverTargetJuego2() {
+            const area = document.getElementById('g2-area');
+            const target = document.getElementById('click-target');
+            
+            const maxX = area.clientWidth - target.clientWidth - 10;
+            const maxY = area.clientHeight - target.clientHeight - 10;
+
+            const randomX = Math.max(10, Math.floor(Math.random() * maxX));
+            const randomY = Math.max(10, Math.floor(Math.random() * maxY));
+
+            target.style.left = randomX + "px";
+            target.style.top = randomY + "px";
+        }
+
+        async function clickTargetJuego2() {
+            g2ClicksRestantes--;
+            const msg = document.getElementById('g2-msg');
+
+            if (g2ClicksRestantes <= 0) {
+                clearInterval(g2Timer);
+                document.getElementById('click-target').style.display = "none";
+                
+                localStorage.setItem(`g2_${usuarioActivoId}_${getFechaHoyStr()}`, "true");
+                const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
+                if (usuario) await registrarEnHistorialFaenas(usuario.nombre, "Minijuego: Reflejos Rápidos", 5, "directa");
+                await completarMision(5, "Juego 2 Diario Completado");
+                comprobarBloqueoJuegos();
+            } else {
+                msg.innerText = `⏳ ¡Buen tiro! Cazas restantes: ${g2ClicksRestantes}`;
+                moverTargetJuego2();
+            }
+        }
+
         // Operaciones Cloud
         async function completarMision(puntos, nombreMision) {
             const docRef = doc(db, "clan", "puntuaciones");
@@ -799,11 +1007,10 @@
             await setDoc(docRefHistorial, nuevoRegistro, { merge: true });
         }
 
-        // NUEVAS FUNCIONES: Vaciado completo de documentos en Firestore
         async function borrarHistorialFaenasCompleto() {
             if(confirm("⚠️ ¿Estás completamente seguro de que quieres BORRAR TODO el historial de misiones y agenda? Esto no se puede deshacer.")){
                 const docRef = doc(db, "clan", "historial_faenas");
-                await setDoc(docRef, {}); // Sobrescribe con un objeto totalmente vacío
+                await setDoc(docRef, {}); 
                 alert("🧹 Historial de faenas limpiado con éxito.");
             }
         }
@@ -811,7 +1018,7 @@
         async function borrarHistorialTiendaCompleto() {
             if(confirm("⚠️ ¿Estás completamente seguro de que quieres BORRAR TODO el historial de canjes de la tienda? Esto no se puede deshacer.")){
                 const docRef = doc(db, "clan", "historial");
-                await setDoc(docRef, {}); // Sobrescribe con un objeto totalmente vacío
+                await setDoc(docRef, {}); 
                 alert("🎁 Historial de tienda limpiado con éxito.");
             }
         }
@@ -821,6 +1028,7 @@
             document.getElementById(`screen-${screenId}`).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             navElement.classList.add('active');
+            if (screenId === 'games') comprobarBloqueoJuegos();
         }
 
         // Listeners Globales
@@ -828,16 +1036,16 @@
             usuarioActivoId = parseInt(e.target.value);
             localStorage.setItem('clan_user_activo', usuarioActivoId);
             renderizarTodo();
+            comprobarBloqueoJuegos();
         });
 
         document.getElementById('nav-ranking').addEventListener('click', function() { switchScreen('ranking', this); });
         document.getElementById('nav-missions').addEventListener('click', function() { switchScreen('missions', this); });
         document.getElementById('nav-shop').addEventListener('click', function() { switchScreen('shop', this); });
         document.getElementById('nav-calendar').addEventListener('click', function() { switchScreen('calendar', this); });
+        document.getElementById('nav-games').addEventListener('click', function() { switchScreen('games', this); });
         
         document.getElementById('btn-reservar-turno').addEventListener('click', agregarTurnoCalendario);
-        
-        // Listeners para los botones de borrado de historial
         document.getElementById('btn-clear-faenas').addEventListener('click', borrarHistorialFaenasCompleto);
         document.getElementById('btn-clear-shop').addEventListener('click', borrarHistorialTiendaCompleto);
 
