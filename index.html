@@ -155,6 +155,17 @@
         .btn-accent { background-color: var(--accent); color: white; }
         .btn-danger { background-color: #ef4444; color: white; }
 
+        .btn-clear-history {
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px dashed var(--border);
+            font-size: 12px;
+            padding: 6px 12px;
+            margin-top: 10px;
+            width: 100%;
+            text-align: center;
+        }
+
         .ranking-card {
             background: var(--card-bg);
             border-radius: 14px;
@@ -252,7 +263,6 @@
 
         .nav-icon { font-size: 20px; }
         
-        /* Estilo común para tablas de historial */
         .table-responsive {
             overflow-x: auto; 
             background: white; 
@@ -321,6 +331,7 @@
                     </tbody>
                 </table>
             </div>
+            <button class="btn-clear-history" id="btn-clear-faenas">🗑️ Limpiar Historial de Misiones</button>
         </div>
 
         <div id="screen-shop" class="screen">
@@ -345,6 +356,7 @@
                     </tbody>
                 </table>
             </div>
+            <button class="btn-clear-history" id="btn-clear-shop">🗑️ Limpiar Historial de Tienda</button>
         </div>
 
         <div id="screen-calendar" class="screen">
@@ -440,7 +452,7 @@
             { id: 14, nombre: "Tito Ángel", foto: "fotos/Titoangel.jpg" },
             { id: 15, nombre: "Tito Rafa", foto: "fotos/Titorafa.jpg" },
             { id: 16, nombre: "Andrea", foto: "fotos/Andrea.jpg" },
-            { id: 17, nombre: "Cloe", foto: "fotos/Cloe.jpg" },
+            { id: 17, font: "fotos/Cloe.jpg", nombre: "Cloe" }
         ];
 
         const misiones = [
@@ -492,7 +504,6 @@
         }
 
         function suscribirTiempoReal() {
-            // Puntuaciones
             onSnapshot(doc(db, "clan", "puntuaciones"), (docSnap) => {
                 if (docSnap.exists()) {
                     familiaDatosGlobal = Object.values(docSnap.data());
@@ -500,34 +511,31 @@
                 }
             });
 
-            // Historial de tienda
             onSnapshot(doc(db, "clan", "historial"), (docSnap) => {
                 if (docSnap.exists()) {
                     historialDatosGlobal = Object.values(docSnap.data()).sort((a, b) => b.timestamp - a.timestamp);
-                    renderizarHistorialCanjes();
+                } else {
+                    historialDatosGlobal = [];
                 }
+                renderizarHistorialCanjes();
             });
 
-            // Calendario / Agenda
             onSnapshot(doc(db, "clan", "calendario"), (docSnap) => {
                 if (docSnap.exists()) {
                     calendarioDatosGlobal = Object.values(docSnap.data()).sort((a, b) => a.fechaRaw.localeCompare(b.fechaRaw));
-                    renderizarCalendario();
                 } else {
                     calendarioDatosGlobal = [];
-                    renderizarCalendario();
                 }
+                renderizarCalendario();
             });
 
-            // Historial global de Faenas y Misiones hechas
             onSnapshot(doc(db, "clan", "historial_faenas"), (docSnap) => {
                 if (docSnap.exists()) {
                     historialFaenasGlobal = Object.values(docSnap.data()).sort((a, b) => b.timestamp - a.timestamp);
-                    renderizarHistorialMisionesYAgenda();
                 } else {
                     historialFaenasGlobal = [];
-                    renderizarHistorialMisionesYAgenda();
                 }
+                renderizarHistorialMisionesYAgenda();
             });
         }
 
@@ -641,17 +649,13 @@
             }).join('');
         }
 
-        // NUEVO: Distribuye el historial de faenas en las dos tablas correspondientes (misiones normales y agenda)
         function renderizarHistorialMisionesYAgenda() {
             const tbodyMisiones = document.getElementById('missions-history-table-body');
             const tbodyAgenda = document.getElementById('faenas-history-table-body');
 
-            // Filtrar misiones normales (las que NO tienen la etiqueta 'Planificado')
             const directas = historialFaenasGlobal.filter(f => !f.tipo || f.tipo !== "planificado");
-            // Filtrar misiones hechas desde la agenda
             const planificadas = historialFaenasGlobal.filter(f => f.tipo === "planificado");
 
-            // Render en pestaña de Misiones
             if (tbodyMisiones) {
                 if (directas.length === 0) {
                     tbodyMisiones.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna misión realizada todavía de forma directa.</td></tr>`;
@@ -667,7 +671,6 @@
                 }
             }
 
-            // Render en pestaña de Agenda
             if (tbodyAgenda) {
                 if (planificadas.length === 0) {
                     tbodyAgenda.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna faena registrada todavía desde la agenda.</td></tr>`;
@@ -776,7 +779,6 @@
             }
         }
 
-        // NUEVO: Registro unificado que guarda el tipo ("directa" o "planificado") para filtrar en las tablas
         async function registrarEnHistorialFaenas(quien, mision, puntosTotales, tipoFaena) {
             const docRefHistorial = doc(db, "clan", "historial_faenas");
             const ahora = new Date();
@@ -795,6 +797,23 @@
             };
 
             await setDoc(docRefHistorial, nuevoRegistro, { merge: true });
+        }
+
+        // NUEVAS FUNCIONES: Vaciado completo de documentos en Firestore
+        async function borrarHistorialFaenasCompleto() {
+            if(confirm("⚠️ ¿Estás completamente seguro de que quieres BORRAR TODO el historial de misiones y agenda? Esto no se puede deshacer.")){
+                const docRef = doc(db, "clan", "historial_faenas");
+                await setDoc(docRef, {}); // Sobrescribe con un objeto totalmente vacío
+                alert("🧹 Historial de faenas limpiado con éxito.");
+            }
+        }
+
+        async function borrarHistorialTiendaCompleto() {
+            if(confirm("⚠️ ¿Estás completamente seguro de que quieres BORRAR TODO el historial de canjes de la tienda? Esto no se puede deshacer.")){
+                const docRef = doc(db, "clan", "historial");
+                await setDoc(docRef, {}); // Sobrescribe con un objeto totalmente vacío
+                alert("🎁 Historial de tienda limpiado con éxito.");
+            }
         }
 
         function switchScreen(screenId, navElement) {
@@ -817,9 +836,12 @@
         document.getElementById('nav-calendar').addEventListener('click', function() { switchScreen('calendar', this); });
         
         document.getElementById('btn-reservar-turno').addEventListener('click', agregarTurnoCalendario);
+        
+        // Listeners para los botones de borrado de historial
+        document.getElementById('btn-clear-faenas').addEventListener('click', borrarHistorialFaenasCompleto);
+        document.getElementById('btn-clear-shop').addEventListener('click', borrarHistorialTiendaCompleto);
 
         document.addEventListener('click', async function(e) {
-            // Acción Hecho desde MISIONES NORMALES (Añadido registro en historial directo)
             if (e.target.classList.contains('btn-mision-directa')) {
                 const puntos = parseInt(e.target.getAttribute('data-puntos'));
                 const nombre = e.target.getAttribute('data-nombre');
@@ -835,7 +857,6 @@
                 const nombre = e.target.getAttribute('data-nombre');
                 comprarRecompensa(coste, nombre);
             }
-            // Acción Hecho desde la Agenda (Con incentivo de +5 puntos extra)
             if (e.target.classList.contains('btn-cal-hecho')) {
                 const puntosBase = parseInt(e.target.getAttribute('data-puntos'));
                 const nombreMision = e.target.getAttribute('data-mision');
