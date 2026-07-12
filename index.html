@@ -251,6 +251,35 @@
         }
 
         .nav-icon { font-size: 20px; }
+        
+        /* Estilo común para tablas de historial */
+        .table-responsive {
+            overflow-x: auto; 
+            background: white; 
+            border-radius: 12px; 
+            border: 1px solid var(--border); 
+            margin-top: 10px;
+        }
+        
+        .table-custom {
+            width: 100%; 
+            border-collapse: collapse; 
+            text-align: left; 
+            font-size: 14px;
+        }
+        
+        .table-custom th {
+            padding: 10px; 
+            font-weight: 600; 
+            color: var(--text-muted);
+            background-color: #f9fafb; 
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .table-custom td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+        }
     </style>
 </head>
 <body>
@@ -273,6 +302,25 @@
         <div id="screen-missions" class="screen">
             <h2>🧹 Lista de Misiones</h2>
             <div id="missions-list"></div>
+
+            <h2 style="margin-top: 30px;">📜 Historial de Misiones Realizadas</h2>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Fecha</th>
+                            <th style="width: 25%;">Quién</th>
+                            <th style="width: 35%;">Misión</th>
+                            <th style="width: 15%;">Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="missions-history-table-body">
+                        <tr>
+                            <td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna misión realizada todavía.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div id="screen-shop" class="screen">
@@ -280,14 +328,14 @@
             <div id="shop-list"></div>
 
             <h2 style="margin-top: 30px;">📜 Historial de Canjes</h2>
-            <div style="overflow-x: auto; background: white; border-radius: 12px; border: 1px solid var(--border); margin-top: 10px;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+            <div class="table-responsive">
+                <table class="table-custom">
                     <thead>
-                        <tr style="background-color: #f9fafb; border-bottom: 1px solid var(--border);">
-                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Fecha</th>
-                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Quién</th>
-                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Premio</th>
-                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Coste</th>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Quién</th>
+                            <th>Premio</th>
+                            <th>Coste</th>
                         </tr>
                     </thead>
                     <tbody id="history-table-body">
@@ -317,15 +365,15 @@
             <h2>📋 Tareas Planificadas</h2>
             <div id="calendar-list" style="margin-bottom: 30px;">Cargando organización...</div>
 
-            <h2>📜 Historial de Faenas Realizadas</h2>
-            <div style="overflow-x: auto; background: white; border-radius: 12px; border: 1px solid var(--border); margin-top: 10px;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+            <h2>📜 Historial de Agenda de Turnos</h2>
+            <div class="table-responsive">
+                <table class="table-custom">
                     <thead>
-                        <tr style="background-color: #f9fafb; border-bottom: 1px solid var(--border);">
-                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Fecha Realizado</th>
-                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Quién</th>
-                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Faena</th>
-                            <th style="padding: 10px; font-weight: 600; color: var(--text-muted);">Total Pts</th>
+                        <tr>
+                            <th>Fecha Realizado</th>
+                            <th>Quién</th>
+                            <th>Faena</th>
+                            <th>Total Pts</th>
                         </tr>
                     </thead>
                     <tbody id="faenas-history-table-body">
@@ -456,7 +504,7 @@
             onSnapshot(doc(db, "clan", "historial"), (docSnap) => {
                 if (docSnap.exists()) {
                     historialDatosGlobal = Object.values(docSnap.data()).sort((a, b) => b.timestamp - a.timestamp);
-                    renderizarHistorial();
+                    renderizarHistorialCanjes();
                 }
             });
 
@@ -471,14 +519,14 @@
                 }
             });
 
-            // Historial de Faenas hechas
+            // Historial global de Faenas y Misiones hechas
             onSnapshot(doc(db, "clan", "historial_faenas"), (docSnap) => {
                 if (docSnap.exists()) {
                     historialFaenasGlobal = Object.values(docSnap.data()).sort((a, b) => b.timestamp - a.timestamp);
-                    renderizarHistorialFaenas();
+                    renderizarHistorialMisionesYAgenda();
                 } else {
                     historialFaenasGlobal = [];
-                    renderizarHistorialFaenas();
+                    renderizarHistorialMisionesYAgenda();
                 }
             });
         }
@@ -518,7 +566,7 @@
                         <span class="card-subtitle">${m.desc}</span>
                         <span class="points-tag points-plus">+${m.puntos} Pts</span>
                     </div>
-                    <button class="btn-success" data-puntos="${m.puntos}" data-nombre="${m.nombre}">✓ Hecho</button>
+                    <button class="btn-success btn-mision-directa" data-puntos="${m.puntos}" data-nombre="${m.nombre}">✓ Hecho</button>
                 </div>
             `).join('');
 
@@ -543,7 +591,7 @@
             }
         }
 
-        function renderizarHistorial() {
+        function renderizarHistorialCanjes() {
             const tbody = document.getElementById('history-table-body');
             if (!tbody) return;
             if (historialDatosGlobal.length === 0) {
@@ -551,11 +599,11 @@
                 return;
             }
             tbody.innerHTML = historialDatosGlobal.map(h => `
-                <tr style="border-bottom: 1px solid var(--border);">
-                    <td style="padding: 10px; color: var(--text-muted); font-size: 13px;">${h.fecha}</td>
-                    <td style="padding: 10px; font-weight: 600;">${h.quien}</td>
-                    <td style="padding: 10px;">🎉 ${h.premio}</td>
-                    <td style="padding: 10px; font-weight: 700; color: #dc2626;">-${h.coste} Pts</td>
+                <tr>
+                    <td style="color: var(--text-muted); font-size: 13px;">${h.fecha}</td>
+                    <td style="font-weight: 600;">${h.quien}</td>
+                    <td>🎉 ${h.premio}</td>
+                    <td style="font-weight: 700; color: #dc2626;">-${h.coste} Pts</td>
                 </tr>
             `).join('');
         }
@@ -593,21 +641,47 @@
             }).join('');
         }
 
-        function renderizarHistorialFaenas() {
-            const tbody = document.getElementById('faenas-history-table-body');
-            if (!tbody) return;
-            if (historialFaenasGlobal.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna faena realizada todavía desde la agenda.</td></tr>`;
-                return;
+        // NUEVO: Distribuye el historial de faenas en las dos tablas correspondientes (misiones normales y agenda)
+        function renderizarHistorialMisionesYAgenda() {
+            const tbodyMisiones = document.getElementById('missions-history-table-body');
+            const tbodyAgenda = document.getElementById('faenas-history-table-body');
+
+            // Filtrar misiones normales (las que NO tienen la etiqueta 'Planificado')
+            const directas = historialFaenasGlobal.filter(f => !f.tipo || f.tipo !== "planificado");
+            // Filtrar misiones hechas desde la agenda
+            const planificadas = historialFaenasGlobal.filter(f => f.tipo === "planificado");
+
+            // Render en pestaña de Misiones
+            if (tbodyMisiones) {
+                if (directas.length === 0) {
+                    tbodyMisiones.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna misión realizada todavía de forma directa.</td></tr>`;
+                } else {
+                    tbodyMisiones.innerHTML = directas.map(f => `
+                        <tr>
+                            <td style="color: var(--text-muted); font-size: 12px;">${f.fechaRealizado}</td>
+                            <td style="font-weight: 600;">${f.quien}</td>
+                            <td style="font-size: 13px;">🧹 ${f.mision}</td>
+                            <td style="font-weight: 700; color: var(--success);">+${f.puntosTotales}</td>
+                        </tr>
+                    `).join('');
+                }
             }
-            tbody.innerHTML = historialFaenasGlobal.map(hf => `
-                <tr style="border-bottom: 1px solid var(--border);">
-                    <td style="padding: 10px; color: var(--text-muted); font-size: 13px;">${hf.fechaRealizado}</td>
-                    <td style="padding: 10px; font-weight: 600;">${hf.quien}</td>
-                    <td style="padding: 10px;">🧹 ${hf.mision}</td>
-                    <td style="padding: 10px; font-weight: 700; color: var(--success);">+${hf.puntosTotales} Pts</td>
-                </tr>
-            `).join('');
+
+            // Render en pestaña de Agenda
+            if (tbodyAgenda) {
+                if (planificadas.length === 0) {
+                    tbodyAgenda.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna faena registrada todavía desde la agenda.</td></tr>`;
+                } else {
+                    tbodyAgenda.innerHTML = planificadas.map(f => `
+                        <tr>
+                            <td style="color: var(--text-muted); font-size: 12px;">${f.fechaRealizado}</td>
+                            <td style="font-weight: 600;">${f.quien}</td>
+                            <td style="font-size: 13px;">📅 ${f.mision} <small style="color:var(--primary); font-weight:bold;">(Planificado)</small></td>
+                            <td style="font-weight: 700; color: var(--success);">+${f.puntosTotales}</td>
+                        </tr>
+                    `).join('');
+                }
+            }
         }
 
         // Operaciones Cloud
@@ -692,19 +766,18 @@
             alert(`📍 Reservado: "${misionNombre}" para el día ${fechaDisplay}. ¡Recuerda que tiene bonus extra!`);
         }
 
-        // Elimina de forma efectiva borrando el nodo completo en Firestore
         async function eliminarTurnoCalendario(idTurno) {
             const docRefCal = doc(db, "clan", "calendario");
             const docSnap = await getDoc(docRefCal);
             if(docSnap.exists()){
                 const data = docSnap.data();
-                delete data[idTurno]; // Elimina la clave del objeto de manera real
-                await setDoc(docRefCal, data); // Sobrescribe el documento limpio sin ese registro
+                delete data[idTurno]; 
+                await setDoc(docRefCal, data); 
             }
         }
 
-        // Guarda el log en el historial de faenas completadas
-        async function registrarEnHistorialFaenas(quien, mision, puntosTotales) {
+        // NUEVO: Registro unificado que guarda el tipo ("directa" o "planificado") para filtrar en las tablas
+        async function registrarEnHistorialFaenas(quien, mision, puntosTotales, tipoFaena) {
             const docRefHistorial = doc(db, "clan", "historial_faenas");
             const ahora = new Date();
             const fechaFormateada = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) + 
@@ -717,7 +790,8 @@
                 fechaRealizado: fechaFormateada,
                 quien: quien,
                 mision: mision,
-                puntosTotales: puntosTotales
+                puntosTotales: puntosTotales,
+                tipo: tipoFaena
             };
 
             await setDoc(docRefHistorial, nuevoRegistro, { merge: true });
@@ -745,10 +819,16 @@
         document.getElementById('btn-reservar-turno').addEventListener('click', agregarTurnoCalendario);
 
         document.addEventListener('click', async function(e) {
-            if (e.target.classList.contains('btn-success') && !e.target.classList.contains('btn-cal-hecho')) {
+            // Acción Hecho desde MISIONES NORMALES (Añadido registro en historial directo)
+            if (e.target.classList.contains('btn-mision-directa')) {
                 const puntos = parseInt(e.target.getAttribute('data-puntos'));
                 const nombre = e.target.getAttribute('data-nombre');
-                completarMision(puntos, nombre);
+                
+                const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
+                if (!usuario) return;
+
+                await registrarEnHistorialFaenas(usuario.nombre, nombre, puntos, "directa");
+                await completarMision(puntos, nombre);
             }
             if (e.target.classList.contains('btn-accent')) {
                 const coste = parseInt(e.target.getAttribute('data-coste'));
@@ -764,14 +844,12 @@
                 const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
                 if (!usuario) return;
 
-                const puntosConIncentivo = puntosBase + 5; // Bonus por cumplir la reserva
+                const puntosConIncentivo = puntosBase + 5; 
 
-                // Guardamos en historial de faenas, sumamos puntos y borramos el pendiente de la agenda
-                await registrarEnHistorialFaenas(usuario.nombre, nombreMision, puntosConIncentivo);
+                await registrarEnHistorialFaenas(usuario.nombre, nombreMision, puntosConIncentivo, "planificado");
                 await completarMision(puntosConIncentivo, `${nombreMision} (Planificado + Bonus)`);
                 await eliminarTurnoCalendario(id);
             }
-            // Quitar turno borrando de forma real en la base de datos
             if (e.target.classList.contains('btn-cal-eliminar')) {
                 const id = e.target.getAttribute('data-id');
                 if(confirm("¿Seguro que quieres quitar esta faena de la lista de planificación?")) {
