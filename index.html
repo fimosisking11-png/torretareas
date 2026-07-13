@@ -19,7 +19,6 @@
             --primary-light: #eeebff;
             --success: #10b981;
             --accent: #f59e0b;
-            --danger: #ef4444;
             --text-main: #1f2937;
             --text-muted: #6b7280;
             --border: #e5e7eb;
@@ -154,7 +153,7 @@
 
         .btn-success { background-color: var(--success); color: white; }
         .btn-accent { background-color: var(--accent); color: white; }
-        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-danger { background-color: #ef4444; color: white; }
 
         .btn-clear-history {
             background-color: transparent;
@@ -204,16 +203,6 @@
         .ranking-points { text-align: right; }
         .total-pts { font-weight: 700; font-size: 15px; color: var(--primary); }
         .current-pts { font-size: 12px; color: var(--text-muted); }
-        .debt-tag {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--danger);
-            background-color: #fef2f2;
-            padding: 2px 6px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-top: 3px;
-        }
 
         .form-calendario {
             background: white;
@@ -533,23 +522,42 @@
             { id: 12, nombre: "Tata Osa", foto: "fotos/Tataosa.jpg" },
             { id: 13, nombre: "Titi", foto: "fotos/Titi.jpg" },
             { id: 14, nombre: "Tito Ángel", foto: "fotos/Titoangel.jpg" },
-            { id: 15, font: "fotos/Titorafa.jpg", nombre: "Tito Rafa" },
+            { id: 15, nombre: "Tito Rafa", foto: "fotos/Titorafa.jpg" },
             { id: 16, nombre: "Andrea", foto: "fotos/Andrea.jpg" },
             { id: 17, nombre: "Cloe", foto: "fotos/Cloe.jpg" }
         ];
 
         const misiones = [
-            { nombre: "Lavar platos y cubiertos", puntos: 15, desc: "Cocina limpia tras comer" },
-            { nombre: "Bajar la basura al contenedor", puntos: 5, desc: "Orgánico y plástico" },
-            { nombre: "Hacer la compra del día", puntos: 30, desc: "Seguir la lista del frigo" },
-            { nombre: "Limpieza a fondo del baño", puntos: 50, desc: "Espejos, ducha e inodoro" },
-            { nombre: "Poner / Tender una lavadora", puntos: 20, desc: "Ropa limpia y bien estirada" }
+            
+            { nombre: "Barrer la rampa", puntos: 45, desc: "Fachada limpia" },
+            { nombre: "Lavar el coche", puntos: 20, desc: "Coches limpios" },
+            { nombre: "Barrer y fregar el suelo", puntos: 50, desc: "Suelo limpio" },
+            { nombre: "Quitar maleza", puntos: 40, desc: "Fuera plantas" },
+            { nombre: "Hacer las camas", puntos: 5, desc: "Bien para dormir" },
+            { nombre: "Limpiar el lavabo", puntos: 60, desc: "Limpios los baños" },
+            { nombre: "Poner/recoger la mesa", puntos: 15, desc: "Listo para comer" },
+            { nombre: "Hacer la comida", puntos: 30, desc: "Cocina limpia tras comer" },
+            { nombre: "Rellenar agua", puntos: 10, desc: "Agua lista" },
+            { nombre: "Ir a comprar", puntos: 65, desc: "Provisiones para el verano" },
+            { nombre: "Ir a tirar la basura", puntos: 25, desc: "Basuras limpias" },
+            { nombre: "Limpiar la piscina", puntos: 10, desc: "Baños limpios" },
+            { nombre: "Recoger los trastos", puntos: 30, desc: "Comedor limpio" },
+            { nombre: "Hacer el lavavajillas", puntos: 20, desc: "Platos limpios" },
+            { nombre: "Hacer una lavadora", puntos: 35, desc: "Ropa limpia" },
         ];
 
         const recompensas = [
-            { nombre: "Elegir película de la noche", coste: 40, desc: "Decisión absoluta del catálogo" },
-            { nombre: "Exención de tareas mañana", coste: 100, desc: "Día libre de misiones domésticas" },
-            { nombre: "Elegir restaurante para cenar", coste: 150, desc: "Tú decides el destino gastronómico" }
+            
+           { nombre: "Dia de descanso", coste: 1000, desc: "Calma durante el dia" }, 
+           { nombre: "Kebab gratis", coste: 1200, desc: "Invitación grupal" },
+           { nombre: "Cena por otro", coste: 500, desc: "Alguien le hace la cena" },
+           { nombre: "Llamar al Héctor Payo", coste: 10, desc: "Que espabile" },
+           { nombre: "Elegir tele durante un dia", coste: 200, desc: "Decisión absoluta del catálogo" },
+           { nombre: "Juego de mesa a elegir", coste: 300, desc: "Decisión absoluta de los juegos" },
+           { nombre: "Compra sorpresa en el pueblo", coste: 2000, desc: "Qee será?" },
+           { nombre: "Compra de 5€", coste: 10000, desc: "Un capricho para el trabajador" },
+           { nombre: "Masaje", coste: 2500, desc: "Relax" },
+           { nombre: "Sirviente por un dia", coste: 15000, desc: "A elección" },
         ];
 
         let familiaDatosGlobal = [];
@@ -571,7 +579,7 @@
             if (!docSnap.exists()) {
                 const estructuraInicial = {};
                 usuariosIniciales.forEach(u => {
-                    estructuraInicial[u.id] = { id: u.id, nombre: u.nombre, totales: 0, disponibles: 0, deuda: 0 };
+                    estructuraInicial[u.id] = { id: u.id, nombre: u.nombre, totales: 0, disponibles: 0 };
                 });
                 await setDoc(docRef, estructuraInicial);
             } else {
@@ -581,11 +589,7 @@
 
                 usuariosIniciales.forEach(u => {
                     if (!dataActual[u.id]) {
-                        actualizacion[u.id] = { id: u.id, nombre: u.nombre, totales: 0, disponibles: 0, deuda: 0 };
-                        necesitaActualizar = true;
-                    } else if (dataActual[u.id].deuda === undefined) {
-                        // Asegurar el campo de la sanción económica sin tocar los puntos
-                        actualizacion[`${u.id}.deuda`] = 0;
+                        actualizacion[u.id] = { id: u.id, nombre: u.nombre, totales: 0, disponibles: 0 };
                         necesitaActualizar = true;
                     }
                 });
@@ -645,17 +649,13 @@
                 let podiumClass = i === 0 ? "podium-1" : i === 1 ? "podium-2" : i === 2 ? "podium-3" : "";
                 const usuarioLocal = usuariosIniciales.find(local => local.id === u.id);
                 let urlFoto = usuarioLocal ? usuarioLocal.foto : "fotos/Toni.png";
-                let deudaActual = u.deuda || 0;
 
                 return `
                     <div class="ranking-card">
                         <div class="ranking-left">
                             <span class="position ${podiumClass}">${i + 1}</span>
                             <img src="${urlFoto}" alt="${u.nombre}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb; background: #f3f4f6; margin-right: 10px; margin-left: 5px;">
-                            <div>
-                                <span class="ranking-name">${u.nombre} ${u.id === usuarioActivoId ? '👤' : ''}</span>
-                                ${deudaActual > 0 ? `<br><span class="debt-tag">💸 Sanción: ${deudaActual.toFixed(2)}€</span>` : ''}
-                            </div>
+                            <span class="ranking-name">${u.nombre} ${u.id === usuarioActivoId ? '👤' : ''}</span>
                         </div>
                         <div class="ranking-points">
                             <div class="total-pts">🌟 ${u.totales} Pts</div>
@@ -728,22 +728,19 @@
                 let urlFoto = usuarioLocal ? usuarioLocal.foto : "fotos/Toni.png";
 
                 return `
-                    <div class="card" style="border-left: 4px solid var(--primary); flex-direction: column; align-items: stretch; gap: 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div class="card-info">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                    <img src="${urlFoto}" style="width: 25px; height: 25px; border-radius: 50%; object-fit: cover;">
-                                    <span style="font-weight: 700; font-size: 14px; color: var(--primary);">${c.quien}</span>
-                                </div>
-                                <span class="card-title">${c.mision}</span>
-                                <span class="card-subtitle">📅 Día: <strong>${c.fechaDisplay}</strong></span>
-                                <span class="points-tag points-plus" style="font-size:11px; padding:2px 6px;">+${c.puntos} Base + Bonus Extra 🔥</span>
+                    <div class="card" style="border-left: 4px solid var(--primary);">
+                        <div class="card-info">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <img src="${urlFoto}" style="width: 25px; height: 25px; border-radius: 50%; object-fit: cover;">
+                                <span style="font-weight: 700; font-size: 14px; color: var(--primary);">${c.quien}</span>
                             </div>
+                            <span class="card-title">${c.mision}</span>
+                            <span class="card-subtitle">📅 Día: <strong>${c.fechaDisplay}</strong></span>
+                            <span class="points-tag points-plus" style="font-size:11px; padding:2px 6px;">+${c.puntos} Base + Bonus Extra 🔥</span>
                         </div>
-                        <div style="display: flex; gap: 6px; width: 100%;">
-                            <button class="btn-success btn-cal-hecho" data-id="${c.id}" data-dueno="${c.quien}" data-mision="${c.mision}" data-puntos="${c.puntos}" style="padding: 8px 10px; font-size: 12px; flex: 1;">✓ Hecho</button>
-                            <button class="btn-danger btn-cal-eliminar" data-id="${c.id}" data-dueno="${c.quien}" style="padding: 8px 10px; font-size: 12px; background-color: #f3f4f6; color: #ef4444; border: 1px solid #ef4444; flex: 1;">❌ Quitar</button>
-                            <button class="btn-danger btn-cal-sancion" data-id="${c.id}" data-dueno="${c.quien}" data-mision="${c.mision}" style="padding: 8px 10px; font-size: 12px; font-weight: bold; background-color: var(--danger); flex: 1.2;">💥 Sancionar (1€)</button>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <button class="btn-success btn-cal-hecho" data-id="${c.id}" data-mision="${c.mision}" data-puntos="${c.puntos}" style="padding: 6px 12px; font-size: 12px;">✓ Hecho</button>
+                            <button class="btn-danger btn-cal-eliminar" data-id="${c.id}" style="padding: 6px 12px; font-size: 12px; background-color: #f3f4f6; color: #ef4444; border: 1px solid #ef4444;">❌ Quitar</button>
                         </div>
                     </div>
                 `;
@@ -754,8 +751,8 @@
             const tbodyMisiones = document.getElementById('missions-history-table-body');
             const tbodyAgenda = document.getElementById('faenas-history-table-body');
 
-            const directas = historialFaenasGlobal.filter(f => !f.tipo || (f.tipo !== "planificado" && f.tipo !== "sancion"));
-            const planificadas = historialFaenasGlobal.filter(f => f.tipo === "planificado" || f.tipo === "sancion");
+            const directas = historialFaenasGlobal.filter(f => !f.tipo || f.tipo !== "planificado");
+            const planificadas = historialFaenasGlobal.filter(f => f.tipo === "planificado");
 
             if (tbodyMisiones) {
                 if (directas.length === 0) {
@@ -776,24 +773,14 @@
                 if (planificadas.length === 0) {
                     tbodyAgenda.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna faena registrada todavía desde la agenda.</td></tr>`;
                 } else {
-                    tbodyAgenda.innerHTML = planificadas.map(f => {
-                        let celdaPts = `<td style="font-weight: 700; color: var(--success);">+${f.puntosTotales}</td>`;
-                        let textoMision = `📅 ${f.mision} <small style="color:var(--primary); font-weight:bold;">(Planificado)</small>`;
-                        
-                        if (f.tipo === "sancion") {
-                            celdaPts = `<td style="font-weight: 700; color: var(--danger);">💸 +1.00€</td>`;
-                            textoMision = `💥 INCUMPLIDO: ${f.mision} <small style="color:var(--danger); font-weight:bold;">(Multa)</small>`;
-                        }
-
-                        return `
-                            <tr>
-                                <td style="color: var(--text-muted); font-size: 12px;">${f.fechaRealizado}</td>
-                                <td style="font-weight: 600;">${f.quien}</td>
-                                <td style="font-size: 13px;">${textoMision}</td>
-                                ${celdaPts}
-                            </tr>
-                        `;
-                    }).join('');
+                    tbodyAgenda.innerHTML = planificadas.map(f => `
+                        <tr>
+                            <td style="color: var(--text-muted); font-size: 12px;">${f.fechaRealizado}</td>
+                            <td style="font-weight: 600;">${f.quien}</td>
+                            <td style="font-size: 13px;">📅 ${f.mision} <small style="color:var(--primary); font-weight:bold;">(Planificado)</small></td>
+                            <td style="font-weight: 700; color: var(--success);">+${f.puntosTotales}</td>
+                        </tr>
+                    `).join('');
                 }
             }
         }
@@ -880,7 +867,7 @@
             target.style.display = "block";
             moverTargetJuego2();
 
-            let tiempoTotal = 6; 
+            let tiempoTotal = 6; // 6 segundos
             g2Timer = setInterval(() => {
                 tiempoTotal--;
                 if (tiempoTotal <= 0) {
@@ -939,20 +926,6 @@
 
             await updateDoc(docRef, actualizacion);
             alert(`¡Genial! Has sumado +${puntos} puntos.`);
-        }
-
-        async function aplicarSancionMonetaria(nombreResponsable, misionNombre) {
-            const docRef = doc(db, "clan", "puntuaciones");
-            const usuarioResponsable = familiaDatosGlobal.find(u => u.nombre === nombreResponsable);
-            
-            if (!usuarioResponsable) return;
-
-            const actualizacion = {};
-            const deudaActual = usuarioResponsable.deuda || 0;
-            actualizacion[`${usuarioResponsable.id}.deuda`] = deudaActual + 1;
-
-            await updateDoc(docRef, actualizacion);
-            alert(`💥 Sanción aplicada con éxito a ${nombreResponsable}. Se le ha sumado +1.00€ a su saldo negativo.`);
         }
 
         async function comprarRecompensa(coste, nombrePremio) {
@@ -1077,16 +1050,6 @@
             if (screenId === 'games') comprobarBloqueoJuegos();
         }
 
-        // Comprobación de identidad de seguridad
-        function verificarIdentidadEsPropietario(nombreDueno) {
-            const usuarioSeleccionadoActivo = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
-            if (!usuarioSeleccionadoActivo || usuarioSeleccionadoActivo.nombre !== nombreDueno) {
-                alert(`⚠️ ¡Acceso Denegado! Esta reserva pertenece a "${nombreDueno}". Cambia la identidad arriba para gestionarla si eres tú.`);
-                return false;
-            }
-            return true;
-        }
-
         // Listeners Globales
         document.getElementById('user-select').addEventListener('change', (e) => {
             usuarioActivoId = parseInt(e.target.value);
@@ -1122,11 +1085,6 @@
                 comprarRecompensa(coste, nombre);
             }
             if (e.target.classList.contains('btn-cal-hecho')) {
-                const dueno = e.target.getAttribute('data-dueno');
-                
-                // CONTROL SEGURIDAD: Solo el dueño la valida
-                if (!verificarIdentidadEsPropietario(dueno)) return;
-
                 const puntosBase = parseInt(e.target.getAttribute('data-puntos'));
                 const nombreMision = e.target.getAttribute('data-mision');
                 const id = e.target.getAttribute('data-id');
@@ -1141,24 +1099,8 @@
                 await eliminarTurnoCalendario(id);
             }
             if (e.target.classList.contains('btn-cal-eliminar')) {
-                const dueno = e.target.getAttribute('data-dueno');
-                
-                // CONTROL SEGURIDAD: Solo el dueño la quita
-                if (!verificarIdentidadEsPropietario(dueno)) return;
-
                 const id = e.target.getAttribute('data-id');
                 if(confirm("¿Seguro que quieres quitar esta faena de la lista de planificación?")) {
-                    await eliminarTurnoCalendario(id);
-                }
-            }
-            if (e.target.classList.contains('btn-cal-sancion')) {
-                const dueno = e.target.getAttribute('data-dueno');
-                const mision = e.target.getAttribute('data-mision');
-                const id = e.target.getAttribute('data-id');
-
-                if (confirm(`¿Confirmas que "${dueno}" NO ha cumplido a tiempo su tarea ("${mision}") y quieres aplicarle la multa de 1.00€ real?`)) {
-                    await registrarEnHistorialFaenas(dueno, mision, 0, "sancion");
-                    await aplicarSancionMonetaria(dueno, mision);
                     await eliminarTurnoCalendario(id);
                 }
             }
