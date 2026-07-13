@@ -544,6 +544,10 @@
             { nombre: "Recoger los trastos", puntos: 30, desc: "Comedor limpio" },
             { nombre: "Hacer el lavavajillas", puntos: 20, desc: "Platos limpios" },
             { nombre: "Hacer una lavadora", puntos: 35, desc: "Ropa limpia" },
+            { nombre: "Pintar", puntos: 70, desc: "Torre bonita" },
+            { nombre: "Meter bebida en la nevera", puntos: 10, desc: "Bebida fresquita" },
+            { nombre: "Distraer Cucu", puntos: 35, desc: "Dificil de hacer" },
+            { nombre: "Hacer cafés", puntos: 20, desc: "Buen postre" },
         ];
 
         const recompensas = [
@@ -558,6 +562,7 @@
            { nombre: "Compra de 5€", coste: 10000, desc: "Un capricho para el trabajador" },
            { nombre: "Masaje", coste: 2500, desc: "Relax" },
            { nombre: "Sirviente por un dia", coste: 15000, desc: "A elección" },
+           { nombre: "Otro hace la tarea por ti", coste: 3000, desc: "Hazme el favor porfa" },
         ];
 
         let familiaDatosGlobal = [];
@@ -573,32 +578,36 @@
         let g2Timer = null;
 
         async function comprobarBaseDeDatos() {
-            const docRef = doc(db, "clan", "puntuaciones");
-            const docSnap = await getDoc(docRef);
+    const docRef = doc(db, "clan", "puntuaciones");
+    const docSnap = await getDoc(docRef);
 
-            if (!docSnap.exists()) {
-                const estructuraInicial = {};
-                usuariosIniciales.forEach(u => {
-                    estructuraInicial[u.id] = { id: u.id, nombre: u.nombre, totales: 0, disponibles: 0 };
-                });
-                await setDoc(docRef, estructuraInicial);
-            } else {
-                const dataActual = docSnap.data();
-                const actualizacion = {};
-                let necesitaActualizar = false;
+    if (!docSnap.exists()) {
+        const estructuraInicial = {};
+        usuariosIniciales.forEach(u => {
+            estructuraInicial[u.id] = { id: u.id, nombre: u.nombre, totales: 0, disponibles: 0, deuda: 0 };
+        });
+        await setDoc(docRef, estructuraInicial);
+    } else {
+        const dataActual = docSnap.data();
+        const actualizacion = {};
+        let necesitaActualizar = false;
 
-                usuariosIniciales.forEach(u => {
-                    if (!dataActual[u.id]) {
-                        actualizacion[u.id] = { id: u.id, nombre: u.nombre, totales: 0, disponibles: 0 };
-                        necesitaActualizar = true;
-                    }
-                });
-
-                if (necesitaActualizar) {
-                    await updateDoc(docRef, actualizacion);
-                }
+        usuariosIniciales.forEach(u => {
+            if (!dataActual[u.id]) {
+                actualizacion[u.id] = { id: u.id, nombre: u.nombre, totales: 0, disponibles: 0, deuda: 0 };
+                necesitaActualizar = true;
+            } else if (dataActual[u.id].deuda === undefined) {
+                // Si el usuario existe pero no tiene el campo deuda, se le añade un 0
+                actualizacion[`${u.id}.deuda`] = 0;
+                necesitaActualizar = true;
             }
+        });
+
+        if (necesitaActualizar) {
+            await updateDoc(docRef, actualizacion);
         }
+    }
+}
 
         function suscribirTiempoReal() {
             onSnapshot(doc(db, "clan", "puntuaciones"), (docSnap) => {
@@ -1026,6 +1035,29 @@
             await setDoc(docRefHistorial, nuevoRegistro, { merge: true });
         }
 
+function verificarIdentidadEsPropietario(nombreDueno) {
+    const usuarioSeleccionadoActivo = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
+    if (!usuarioSeleccionadoActivo || usuarioSeleccionadoActivo.nombre !== nombreDueno) {
+        alert(`⚠️ ¡Acceso Denegado! Esta reserva pertenece a "${nombreDueno}". Cambia tu identidad en el menú de arriba si eres tú.`);
+        return false;
+    }
+    return true;
+}
+
+async function aplicarSancionMonetaria(nombreResponsable, misionNombre) {
+    const docRef = doc(db, "clan", "puntuaciones");
+    const usuarioResponsable = familiaDatosGlobal.find(u => u.nombre === nombreResponsable);
+    
+    if (!usuarioResponsable) return;
+
+    const actualizacion = {};
+    const deudaActual = usuarioResponsable.deuda || 0;
+    actualizacion[`${usuarioResponsable.id}.deuda`] = deudaActual + 1; // Suma 1 euro
+
+    await updateDoc(docRef, actualizacion);
+    alert(`💥 Sanción aplicada a ${nombreResponsable}. Se le ha sumado +1.00€ de penalización.`);
+}
+
         async function borrarHistorialFaenasCompleto() {
             if(confirm("⚠️ ¿Estás completamente seguro de que quieres BORRAR TODO el historial de misiones y agenda? Esto no se puede deshacer.")){
                 const docRef = doc(db, "clan", "historial_faenas");
@@ -1068,43 +1100,72 @@
         document.getElementById('btn-clear-faenas').addEventListener('click', borrarHistorialFaenasCompleto);
         document.getElementById('btn-clear-shop').addEventListener('click', borrarHistorialTiendaCompleto);
 
-        document.addEventListener('click', async function(e) {
-            if (e.target.classList.contains('btn-mision-directa')) {
-                const puntos = parseInt(e.target.getAttribute('data-puntos'));
-                const nombre = e.target.getAttribute('data-nombre');
-                
-                const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
-                if (!usuario) return;
+       document.addEventListener('click', async function(e) {
+    if (e.target.classList.contains('btn-mision-directa')) {
+        const puntos = parseInt(e.target.getAttribute('data-puntos'));
+        const nombre = e.target.getAttribute('data-nombre');
+        
+        const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
+        if (!usuario) return;
 
-                await registrarEnHistorialFaenas(usuario.nombre, nombre, puntos, "directa");
-                await completarMision(puntos, nombre);
-            }
-            if (e.target.classList.contains('btn-accent')) {
-                const coste = parseInt(e.target.getAttribute('data-coste'));
-                const nombre = e.target.getAttribute('data-nombre');
-                comprarRecompensa(coste, nombre);
-            }
-            if (e.target.classList.contains('btn-cal-hecho')) {
-                const puntosBase = parseInt(e.target.getAttribute('data-puntos'));
-                const nombreMision = e.target.getAttribute('data-mision');
-                const id = e.target.getAttribute('data-id');
-                
-                const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
-                if (!usuario) return;
+        await registrarEnHistorialFaenas(usuario.nombre, nombre, puntos, "directa");
+        await completarMision(puntos, nombre);
+    }
+    if (e.target.classList.contains('btn-accent')) {
+        const coste = parseInt(e.target.getAttribute('data-coste'));
+        const nombre = e.target.getAttribute('data-nombre');
+        comprarRecompensa(coste, nombre);
+    }
+    
+    // -----------------------------------------------------------------
+    // CAMBIOS EN LA AGENDA (CON SEGURIDAD Y NUEVA SANCIÓN)
+    // -----------------------------------------------------------------
+    
+    if (e.target.classList.contains('btn-cal-hecho')) {
+        const dueno = e.target.getAttribute('data-dueno');
+        
+        // Bloqueo de seguridad: Si no eres el dueño, no te deja hacer click
+        if (!verificarIdentidadEsPropietario(dueno)) return;
 
-                const puntosConIncentivo = puntosBase + 5; 
+        const puntosBase = parseInt(e.target.getAttribute('data-puntos'));
+        const nombreMision = e.target.getAttribute('data-mision');
+        const id = e.target.getAttribute('data-id');
+        
+        const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
+        if (!usuario) return;
 
-                await registrarEnHistorialFaenas(usuario.nombre, nombreMision, puntosConIncentivo, "planificado");
-                await completarMision(puntosConIncentivo, `${nombreMision} (Planificado + Bonus)`);
-                await eliminarTurnoCalendario(id);
-            }
-            if (e.target.classList.contains('btn-cal-eliminar')) {
-                const id = e.target.getAttribute('data-id');
-                if(confirm("¿Seguro que quieres quitar esta faena de la lista de planificación?")) {
-                    await eliminarTurnoCalendario(id);
-                }
-            }
-        });
+        const puntosConIncentivo = puntosBase + 5; 
+
+        await registrarEnHistorialFaenas(usuario.nombre, nombreMision, puntosConIncentivo, "planificado");
+        await completarMision(puntosConIncentivo, `${nombreMision} (Planificado + Bonus)`);
+        await eliminarTurnoCalendario(id);
+    }
+    
+    if (e.target.classList.contains('btn-cal-eliminar')) {
+        const dueno = e.target.getAttribute('data-dueno');
+        
+        // Bloqueo de seguridad: Solo el dueño la quita de la lista
+        if (!verificarIdentidadEsPropietario(dueno)) return;
+
+        const id = e.target.getAttribute('data-id');
+        if(confirm("¿Seguro que quieres quitar esta faena de la lista de planificación?")) {
+            await eliminarTurnoCalendario(id);
+        }
+    }
+    
+    if (e.target.classList.contains('btn-cal-sancion')) {
+        const dueno = e.target.getAttribute('data-dueno');
+        const mision = e.target.getAttribute('data-mision');
+        const id = e.target.getAttribute('data-id');
+
+        // Este botón lo puede pulsar cualquiera si ve que el otro no ha cumplido
+        if (confirm(`¿Confirmas que "${dueno}" NO ha hecho a tiempo la tarea "${mision}" y quieres ponerle la multa de 1€?`)) {
+            await registrarEnHistorialFaenas(dueno, mision, 0, "sancion");
+            await aplicarSancionMonetaria(dueno, mision);
+            await eliminarTurnoCalendario(id);
+        }
+    }
+});
 
         (async () => {
             await comprobarBaseDeDatos();
