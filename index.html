@@ -337,60 +337,151 @@
     </header>
 
     <div class="container">
-        <div id="screen-ranking" class="screen active">
-            <h2>🏆 Clasificación en Tiempo Real</h2>
-            <div id="leaderboard-list">Cargando clasificación...</div>
+    <div id="screen-ranking" class="screen active">
+        <h2>🏆 Clasificación en Tiempo Real</h2>
+        <div id="leaderboard-list">Cargando clasificación...</div>
+    </div>
+
+    <div id="screen-missions" class="screen">
+        <h2>🧹 Lista de Misiones</h2>
+        <div id="missions-list"></div>
+
+        <h2 style="margin-top: 30px;">📜 Historial de Misiones Realizadas</h2>
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Fecha</th>
+                        <th style="width: 25%;">Quién</th>
+                        <th style="width: 35%;">Misión</th>
+                        <th style="width: 15%;">Pts</th>
+                    </tr>
+                </thead>
+                <tbody id="missions-history-table-body">
+                    <tr>
+                        <td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna misión realizada todavía.</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+        <button class="btn-clear-history" id="btn-clear-faenas">🗑️ Limpiar Historial de Misiones</button>
+    </div>
 
-        <div id="screen-missions" class="screen">
-            <h2>🧹 Lista de Misiones</h2>
-            <div id="missions-list"></div>
+    <div id="screen-shop" class="screen">
+        <h2>🎁 Canjear Recompensas</h2>
+        <div id="shop-list"></div>
 
-            <h2 style="margin-top: 30px;">📜 Historial de Misiones Realizadas</h2>
-            <div class="table-responsive">
-                <table class="table-custom">
-                    <thead>
-                        <tr>
-                            <th style="width: 25%;">Fecha</th>
-                            <th style="width: 25%;">Quién</th>
-                            <th style="width: 35%;">Misión</th>
-                            <th style="width: 15%;">Pts</th>
-                        </tr>
-                    </thead>
-                    <tbody id="missions-history-table-body">
-                        <tr>
-                            <td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna misión realizada todavía.</td>
-                        </tr>
-                    </tbody>
-                </table>
+        <h2 style="margin-top: 30px;">📜 Historial de Canjes</h2>
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Quién</th>
+                        <th>Premio</th>
+                        <th>Coste</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <tr>
+                        <td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ningún premio canjeado todavía.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button class="btn-clear-history" id="btn-clear-shop">🗑️ Limpiar Historial de Tienda</button>
+    </div>
+
+    <div id="screen-calendar" class="screen">
+        <h2>📅 Reservar Turno de Faena</h2>
+        <div class="form-calendario">
+            <div class="form-row">
+                <label for="cal-mision">¿Qué faena vas a hacer? <span style="color: var(--success); font-size: 11px;">¡Bonus +5 Pts!</span></label>
+                <select id="cal-mision"></select>
             </div>
-            <button class="btn-clear-history" id="btn-clear-faenas">🗑️ Limpiar Historial de Misiones</button>
-        </div>
-
-        <div id="screen-shop" class="screen">
-            <h2>🎁 Canjear Recompensas</h2>
-            <div id="shop-list"></div>
-
-            <h2 style="margin-top: 30px;">📜 Historial de Canjes</h2>
-            <div class="table-responsive">
-                <table class="table-custom">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Quién</th>
-                            <th>Premio</th>
-                            <th>Coste</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-table-body">
-                        <tr>
-                            <td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ningún premio canjeado todavía.</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="form-row">
+                <label for="cal-fecha">¿Qué día la vas a hacer?</label>
+                <input type="date" id="cal-fecha">
             </div>
-            <button class="btn-clear-history" id="btn-clear-shop">🗑️ Limpiar Historial de Tienda</button>
+            <button class="btn-success" id="btn-reservar-turno" style="width: 100%; margin-top: 5px;">📍 Reservar mi día</button>
         </div>
+
+        <h2>📋 Tareas Planificadas</h2>
+        <div id="calendar-list" style="margin-bottom: 30px;">Cargando organización...</div>
+
+        <h2>📜 Historial de Agenda de Turnos</h2>
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Fecha Realizado</th>
+                        <th>Quién</th>
+                        <th>Faena</th>
+                        <th>Total Pts</th>
+                    </tr>
+                </thead>
+                <tbody id="faenas-history-table-body">
+                    <tr>
+                        <td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Ninguna faena registrada todavía desde la agenda.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="screen-games" class="screen">
+        <h2>🎮 Retos y Juegos Diarios</h2>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Completa los juegos para conseguir puntos extra. ¡Solo un intento ganador por día!</p>
+
+        <div class="game-box" id="game1-box">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; font-size:16px;">1️⃣ El Número Secreto</span>
+                <span class="points-tag points-plus">+5 Pts</span>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">Adivina el número del 1 al 10 en 3 intentos.</p>
+            <div class="game-container-area" id="g1-area"></div>
+        </div>
+
+        <div class="game-box" id="game2-box">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; font-size:16px;">2️⃣ Reflejos Rápidos</span>
+                <span class="points-tag points-plus">+5 Pts</span>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">Caza al botón rojo 5 veces antes de que se acabe el tiempo.</p>
+            <div class="game-container-area" id="g2-area" style="min-height: 160px;"></div>
+        </div>
+    </div>
+
+    <div id="screen-ruleta" class="screen">
+        <h2>🎰 La Ruleta de la Suerte</h2>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Prueba tu suerte por 50 Pts. ¡Los domingos a partir de las 15:00h la primera tirada es gratis!</p>
+        
+        <div class="game-box" style="text-align: center; padding: 30px 16px;">
+            <div id="ruleta-display" style="font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 20px; min-height: 50px; display: flex; align-items: center; justify-content: center; border: 2px dashed var(--border); border-radius: 12px; background: var(--bg-color); padding: 10px;">
+                🔮 ¿Te atreves a tirar?
+            </div>
+            <button class="btn-success" id="btn-girar-ruleta" style="width: 100%; padding: 14px; font-size: 16px;">🎰 Girar (50 Pts)</button>
+        </div>
+
+        <h2>📜 Historial de la Ruleta</h2>
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Hora</th>
+                        <th style="width: 30%;">Quién</th>
+                        <th style="width: 45%;">Premio</th>
+                    </tr>
+                </thead>
+                <tbody id="ruleta-history-table-body">
+                    <tr>
+                        <td colspan="3" style="padding: 15px; text-align: center; color: var(--text-muted);">Nadie ha tirado la ruleta hoy.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
         <div id="screen-calendar" class="screen">
             <h2>📅 Reservar Turno de Faena</h2>
@@ -487,6 +578,7 @@
             <span class="nav-icon">🎮</span>
             <span>Juegos</span>
         </div>
+        <div class="nav-item" id="nav-ruleta"><span class="nav-icon">🎰</span><span>Ruleta</span></div>
     </nav>
 
     <script type="module">
@@ -524,7 +616,8 @@
             { id: 14, nombre: "Tito Ángel", foto: "fotos/Titoangel.jpg" },
             { id: 15, nombre: "Tito Rafa", foto: "fotos/Titorafa.jpg" },
             { id: 16, nombre: "Andrea", foto: "fotos/Andrea.jpg" },
-            { id: 17, nombre: "Cloe", foto: "fotos/Cloe.jpg" }
+            { id: 17, nombre: "Cloe", foto: "fotos/Cloe.jpg" },
+            { id: 18, nombre: "Juan", foto: "fotos/Juan.png" }
         ];
 
         const misiones = [
@@ -548,6 +641,9 @@
             { nombre: "Meter bebida en la nevera", puntos: 10, desc: "Bebida fresquita" },
             { nombre: "Distraer Cucu", puntos: 35, desc: "Dificil de hacer" },
             { nombre: "Hacer cafés", puntos: 20, desc: "Buen postre" },
+            { nombre: "Hacer clase de aquagym", puntos: 50, desc: "Buen ejercicio" },
+            { nombre: "Asistir a clase de aquagym", puntos: 30, desc: "Buena clase" },
+            { nombre: "Hacer postres", puntos: 40, desc: "Buen postre" },
         ];
 
         const recompensas = [
@@ -563,6 +659,7 @@
            { nombre: "Masaje", coste: 2500, desc: "Relax" },
            { nombre: "Sirviente por un dia", coste: 15000, desc: "A elección" },
            { nombre: "Otro hace la tarea por ti", coste: 3000, desc: "Hazme el favor porfa" },
+           { nombre: "Elige musica de aquagym", coste: 700, desc: "bailes chulis" },
         ];
 
         let familiaDatosGlobal = [];
@@ -577,6 +674,199 @@
         let g2ClicksRestantes = 5;
         let g2Timer = null;
 
+        // =========================================================
+        // 🎰 AQUÍ VA EL BLOQUE DE LA RULETA DE LA SUERTE
+        // =========================================================
+        const premiosRuleta = [
+            "🌟 +50 Puntos", "🔥 +75 Puntos", "👑 +100 Puntos",
+            "🗑️ Misión: Tirar la basura", "🍽️ Misión: Fregar los platos",
+            "⚡ Multiplicador x2", "🔄 Tira otra vez", "💨 Nada (Mala suerte)",
+            "📉 -25 Puntos", "💀 -50 Puntos", "🍕 ¡Cena Gratis!",
+            "🧺 Misión: Poner/recoger la mesa", "🏖️ ¡Día libre de tareas!",
+            "🥷 Robar 15 puntos a otro", "💥 Multa de 1€",
+            "🏃‍♂️ Hacer 67 durante 1 min", "🎵 Música para el próximo aquagym"
+        ];
+
+        let historialRuletaGlobal = [];
+
+        onSnapshot(doc(db, "clan", "historial_ruleta"), (docSnap) => {
+            if (docSnap.exists()) {
+                historialRuletaGlobal = Object.values(docSnap.data()).sort((a, b) => b.timestamp - a.timestamp);
+            } else {
+                historialRuletaGlobal = [];
+            }
+            renderizarHistorialRuleta();
+        });
+
+        function renderizarHistorialRuleta() {
+            const tbody = document.getElementById('ruleta-history-table-body');
+            if (!tbody) return;
+            if (historialRuletaGlobal.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="padding: 15px; text-align: center; color: var(--text-muted);">Nadie ha tirado la ruleta hoy.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = historialRuletaGlobal.map(r => `
+                <tr>
+                    <td style="color: var(--text-muted); font-size: 12px;">${r.fecha}</td>
+                    <td style="font-weight: 600;">${r.quien}</td>
+                    <td style="font-weight: 700; color: var(--primary); font-size: 13px;">${r.premio}</td>
+                </tr>
+            `).join('');
+        }
+
+        function esTiradaGratisDomingo() {
+            const ahora = new Date();
+            return ahora.getDay() === 0 && ahora.getHours() >= 15;
+        }
+
+        function actualizarBotonRuleta() {
+            const btn = document.getElementById('btn-girar-ruleta');
+            if (!btn) return;
+            
+            const hoyStr = getFechaHoyStr();
+            const yaTiroHoy = localStorage.getItem(`ruleta_${usuarioActivoId}_${hoyStr}`);
+            
+            if (yaTiroHoy) {
+                btn.innerText = "❌ Ya has tirado hoy";
+                btn.style.opacity = "0.5";
+                btn.disabled = true;
+                return;
+            }
+
+            if (esTiradaGratisDomingo()) {
+                btn.innerText = "🎁 ¡Tirada Gratis de Domingo!";
+                btn.style.backgroundColor = "var(--accent)";
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            } else {
+                btn.innerText = "🎰 Girar (Coste: 50 Pts)";
+                btn.style.backgroundColor = "var(--success)";
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            }
+        }
+
+        async function girarLaRuleta() {
+            const usuario = familiaDatosGlobal.find(u => u.id === usuarioActivoId);
+            if (!usuario) return;
+
+            const hoyStr = getFechaHoyStr();
+            if (localStorage.getItem(`ruleta_${usuarioActivoId}_${hoyStr}`)) {
+                alert("⚠️ Ya has gastado tu tirada de hoy. ¡Vuelve mañana!");
+                return;
+            }
+
+            const esGratis = esTiradaGratisDomingo();
+            
+            if (!esGratis) {
+                if (usuario.disponibles < 50 || usuario.totales < 50) {
+                    alert(`⚠️ Necesitas 50 puntos en total y en el bolsillo para tirar. Tienes: 🌟${usuario.totales} / 💰${usuario.disponibles}`);
+                    return;
+                }
+                
+                const docRefPuntos = doc(db, "clan", "puntuaciones");
+                const actualizacionPuntos = {};
+                actualizacionPuntos[`${usuario.id}.totales`] = Math.max(0, usuario.totales - 50);
+                actualizacionPuntos[`${usuario.id}.disponibles`] = Math.max(0, usuario.disponibles - 50);
+                await updateDoc(docRefPuntos, actualizacionPuntos);
+            }
+
+            localStorage.setItem(`ruleta_${usuarioActivoId}_${hoyStr}`, "true");
+            actualizarBotonRuleta();
+
+            const display = document.getElementById('ruleta-display');
+            const btn = document.getElementById('btn-girar-ruleta');
+            btn.disabled = true;
+
+            let giros = 0;
+            const intervaloAnimacion = setInterval(() => {
+                const premioAleatorio = premiosRuleta[Math.floor(Math.random() * premiosRuleta.length)];
+                display.innerText = `🔄 GIRANDO... ${premioAleatorio}`;
+                giros++;
+                
+                if (giros > 15) {
+                    clearInterval(intervaloAnimacion);
+                    aplicarPremioFinal(usuario);
+                }
+            }, 120);
+        }
+
+        async function aplicarPremioFinal(usuario) {
+            const indiceFinal = Math.floor(Math.random() * premiosRuleta.length);
+            const premioGanado = premiosRuleta[indiceFinal];
+            
+            document.getElementById('ruleta-display').innerHTML = `🎉 ¡TE HA TOCADO!<br><strong>${premioGanado}</strong>`;
+            
+            const docRefPuntos = doc(db, "clan", "puntuaciones");
+            const actualizacion = {};
+            
+            if (premioGanado.includes("+50 Puntos")) {
+                actualizacion[`${usuario.id}.totales`] = usuario.totales + 50;
+                actualizacion[`${usuario.id}.disponibles`] = usuario.disponibles + 50;
+                await updateDoc(docRefPuntos, actualizacion);
+            } 
+            else if (premioGanado.includes("+75 Puntos")) {
+                actualizacion[`${usuario.id}.totales`] = usuario.totales + 75;
+                actualizacion[`${usuario.id}.disponibles`] = usuario.disponibles + 75;
+                await updateDoc(docRefPuntos, actualizacion);
+            } 
+            else if (premioGanado.includes("+100 Puntos")) {
+                actualizacion[`${usuario.id}.totales`] = usuario.totales + 100;
+                actualizacion[`${usuario.id}.disponibles`] = usuario.disponibles + 100;
+                await updateDoc(docRefPuntos, actualizacion);
+            } 
+            else if (premioGanado.includes("-25 Puntos")) {
+                actualizacion[`${usuario.id}.totales`] = Math.max(0, usuario.totales - 25);
+                actualizacion[`${usuario.id}.disponibles`] = Math.max(0, usuario.disponibles - 25);
+                await updateDoc(docRefPuntos, actualizacion);
+            } 
+            else if (premioGanado.includes("-50 Puntos")) {
+                actualizacion[`${usuario.id}.totales`] = Math.max(0, usuario.totales - 50);
+                actualizacion[`${usuario.id}.disponibles`] = Math.max(0, usuario.disponibles - 50);
+                await updateDoc(docRefPuntos, actualizacion);
+            } 
+            else if (premioGanado.includes("Multa de 1€")) {
+                const deudaActual = usuario.deuda || 0;
+                actualizacion[`${usuario.id}.deuda`] = deudaActual + 1;
+                await updateDoc(docRefPuntos, actualizacion);
+            } 
+            else if (premioGanado.includes("Robar 15 puntos a otro")) {
+                const victimasPosibles = familiaDatosGlobal.filter(u => u.id !== usuario.id && u.disponibles >= 15);
+                if (victimasPosibles.length > 0) {
+                    const victima = victimasPosibles[Math.floor(Math.random() * victimasPosibles.length)];
+                    const actVictima = {};
+                    actVictima[`${victima.id}.totales`] = Math.max(0, victima.totales - 15);
+                    actVictima[`${victima.id}.disponibles`] = Math.max(0, victima.disponibles - 15);
+                    await updateDoc(docRefPuntos, actVictima);
+                    
+                    actualizacion[`${usuario.id}.totales`] = usuario.totales + 15;
+                    actualizacion[`${usuario.id}.disponibles`] = usuario.disponibles + 15;
+                    await updateDoc(docRefPuntos, actualizacion);
+                    alert(`🥷 ¡Le has robado 15 puntos a ${victima.nombre}!`);
+                } else {
+                    alert("Nadie en la familia tiene suficientes puntos para robar, ¡te quedas sin botín!");
+                }
+            }
+
+            const docRefHistorial = doc(db, "clan", "historial_ruleta");
+            const ahora = new Date();
+            const fechaFormateada = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) + 
+                                   " " + ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            
+            const idHistorial = "ruleta_" + ahora.getTime();
+            const nuevoRegistro = {};
+            nuevoRegistro[idHistorial] = {
+                timestamp: ahora.getTime(),
+                fecha: fechaFormateada,
+                quien: usuario.nombre,
+                premio: premioGanado
+            };
+            await setDoc(docRefHistorial, nuevoRegistro, { merge: true });
+            setTimeout(actualizarBotonRuleta, 1000);
+        }
+        // =========================================================
+
+      
         async function comprobarBaseDeDatos() {
     const docRef = doc(db, "clan", "puntuaciones");
     const docSnap = await getDoc(docRef);
@@ -1101,6 +1391,15 @@ async function aplicarSancionMonetaria(nombreResponsable, misionNombre) {
         document.getElementById('nav-shop').addEventListener('click', function() { switchScreen('shop', this); });
         document.getElementById('nav-calendar').addEventListener('click', function() { switchScreen('calendar', this); });
         document.getElementById('nav-games').addEventListener('click', function() { switchScreen('games', this); });
+
+        // 🎰 EL NUEVO BOTÓN DEL MENÚ DE LA RULETA
+document.getElementById('nav-ruleta').addEventListener('click', function() { 
+    switchScreen('ruleta', this); 
+    actualizarBotonRuleta();
+});
+
+// 🎰 EL BOTÓN DE CASINO PARA GIRAR
+document.getElementById('btn-girar-ruleta').addEventListener('click', girarLaRuleta);
         
         document.getElementById('btn-reservar-turno').addEventListener('click', agregarTurnoCalendario);
         document.getElementById('btn-clear-faenas').addEventListener('click', borrarHistorialFaenasCompleto);
